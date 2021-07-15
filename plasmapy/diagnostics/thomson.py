@@ -451,7 +451,7 @@ def _spectral_density_model(wavelengths, settings=None, **params):
 
     # Strip units and normalize
     model_Skw = model_Skw.to(u.s / u.rad).value
-    model_Skw *= 1 / np.trapz(model_Skw, wavelengths)
+    model_Skw *= 1 / np.max(model_Skw)
 
     return model_Skw
 

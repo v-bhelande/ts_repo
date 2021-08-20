@@ -75,11 +75,13 @@ def fast_scattered_power(
         Ti=Ti,
         efract=efract,
         ifract=ifract,
-        ion_species=ion_species,
-        electron_vel=electron_vel,
+        ion_z=ion_z,
+        ion_mass=ion_mass,
         ion_vel=ion_vel,
+        electron_vel=electron_vel,
         probe_vec=probe_vec,
         scatter_vec=scatter_vec,
+        inst_fcn_arr=inst_fcn_arr,
     )
 
     return (1 - 2 * w / wl) * Skw

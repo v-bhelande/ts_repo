@@ -39,6 +39,52 @@ _m_e = const.m_e.si.value
 # The probem is a lambda function used in the Particle class...
 
 
+def fast_scattered_power(
+    wavelengths,
+    probe_wavelength,
+    n,
+    Te,
+    Ti,
+    efract: np.ndarray = np.array([1.0]),
+    ifract: np.ndarray = np.array([1.0]),
+    ion_z=np.array([1]),
+    ion_mass=np.array([1]),
+    ion_vel=None,
+    electron_vel=None,
+    probe_vec=np.array([1, 0, 0]),
+    scatter_vec=np.array([0, 1, 0]),
+    inst_fcn_arr=None,
+):
+    # Define some constants
+    C = const.c.si  # speed of light
+
+    # Convert wavelengths to angular frequencies (electromagnetic waves, so
+    # phase speed is c)
+    ws = (2 * np.pi * u.rad * C / wavelengths).to(u.rad / u.s)
+    wl = (2 * np.pi * u.rad * C / probe_wavelength).to(u.rad / u.s)
+
+    # Compute the frequency shift (required by energy conservation)
+    w = ws - wl
+
+    # Compute the spectral density
+    alpha, Skw = fast_spectral_density(
+        wavelengths=wavelengths,
+        probe_wavelength=probe_wavelength,
+        n=n,
+        Te=Te,
+        Ti=Ti,
+        efract=efract,
+        ifract=ifract,
+        ion_species=ion_species,
+        electron_vel=electron_vel,
+        ion_vel=ion_vel,
+        probe_vec=probe_vec,
+        scatter_vec=scatter_vec,
+    )
+
+    return (1 - 2 * w / wl) * Skw
+
+
 def fast_spectral_density(
     wavelengths,
     probe_wavelength,

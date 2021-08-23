@@ -87,7 +87,7 @@ def fast_scattered_power(
     # Normalize scattered power integral
     Pw *= 1 / (np.trapz(Pw, wavelengths.to(u.m).value))
 
-    return
+    return Pw
 
 
 def fast_spectral_density(

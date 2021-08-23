@@ -5,7 +5,7 @@ part of the diagnostics package.
 
 __all__ = [
     "spectral_density",
-    "spectral_density_model",
+    "scattered_power_model",
 ]
 
 import astropy.constants as const
@@ -572,7 +572,7 @@ def _scattered_power_model(wavelengths, settings=None, **params):
     return model_Pw
 
 
-def spectral_density_model(wavelengths, settings, params):
+def scattered_power_model(wavelengths, settings, params):
     """
     Returns a `lmfit.Model` function for Thomson spectral density function
 
@@ -768,7 +768,7 @@ def spectral_density_model(wavelengths, settings, params):
     # to be used to represnt regions of missing data
     # the "settings" dict is an additional kwarg that will be passed to the model function on every call
     model = Model(
-        _spectral_density_model,
+        _scattered_power_model,
         independent_vars=["wavelengths"],
         nan_policy="omit",
         settings=settings,

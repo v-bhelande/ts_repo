@@ -55,13 +55,11 @@ def fast_scattered_power(
     scatter_vec=np.array([0, 1, 0]),
     inst_fcn_arr=None,
 ):
-    # Define some constants
-    C = const.c.si  # speed of light
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
-    ws = (2 * np.pi * u.rad * C / wavelengths).to(u.rad / u.s)
-    wl = (2 * np.pi * u.rad * C / probe_wavelength).to(u.rad / u.s)
+    ws = 2 * np.pi * _c / wavelengths
+    wl = 2 * np.pi * _c / probe_wavelength
 
     # Compute the frequency shift (required by energy conservation)
     w = ws - wl
@@ -84,7 +82,12 @@ def fast_scattered_power(
         inst_fcn_arr=inst_fcn_arr,
     )
 
-    return (1 - 2 * w / wl) * Skw
+    Pw = (1 - 2 * w / wl) * Skw
+
+    # Normalize scattered power integral
+    Pw *= 1 / (np.trapz(Pw, wavelengths.to(u.m).value))
+
+    return
 
 
 def fast_spectral_density(
@@ -512,7 +515,7 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def _spectral_density_model(wavelengths, settings=None, **params):
+def _scattered_power_model(wavelengths, settings=None, **params):
     """
     lmfit Model function for fitting Thomson spectra
 
@@ -547,7 +550,7 @@ def _spectral_density_model(wavelengths, settings=None, **params):
     Te *= 11605
     Ti *= 11605
 
-    alpha, model_Skw = fast_spectral_density(
+    alpha, model_Pw = fast_scattered_power(
         wavelengths,
         probe_wavelength,
         n,
@@ -564,9 +567,9 @@ def _spectral_density_model(wavelengths, settings=None, **params):
         inst_fcn_arr=inst_fcn_arr,
     )
 
-    model_Skw *= 1 / np.max(model_Skw)
+    model_Pw *= 1 / np.trapz(model_Pw, wavelengths)
 
-    return model_Skw
+    return model_Pw
 
 
 def spectral_density_model(wavelengths, settings, params):

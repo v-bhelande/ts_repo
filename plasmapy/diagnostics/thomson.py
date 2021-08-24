@@ -86,7 +86,8 @@ def scattered_power(
     Pw = (1 - 2 * w / wl) * Skw
 
     # Normalize scattered power integral
-    Pw *= 1 / (np.trapz(Pw, wavelengths.to(u.m).value))
+
+    Pw *= 1 / (np.trapz(Pw, wavelengths))
 
     return Pw
 

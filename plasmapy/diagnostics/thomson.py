@@ -5,6 +5,7 @@ part of the diagnostics package.
 
 __all__ = [
     "spectral_density",
+    "scattered_power",
     "scattered_power_model",
 ]
 
@@ -39,7 +40,7 @@ _m_e = const.m_e.si.value
 # The probem is a lambda function used in the Particle class...
 
 
-def fast_scattered_power(
+def scattered_power(
     wavelengths,
     probe_wavelength,
     n,
@@ -523,6 +524,8 @@ def _scattered_power_model(wavelengths, settings=None, **params):
 
     """
 
+    wavelengths_unitless = wavelengths.to(u.m).value
+
     # LOAD FROM SETTINGS
     ion_z = settings["ion_z"]
     ion_mass = settings["ion_mass"]
@@ -550,8 +553,8 @@ def _scattered_power_model(wavelengths, settings=None, **params):
     Te *= 11605
     Ti *= 11605
 
-    alpha, model_Pw = fast_scattered_power(
-        wavelengths,
+    alpha, model_Pw = scattered_power(
+        wavelengths_unitless,
         probe_wavelength,
         n,
         Te,

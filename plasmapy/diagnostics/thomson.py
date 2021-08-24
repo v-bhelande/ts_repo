@@ -570,7 +570,7 @@ def _scattered_power_model(wavelengths, settings=None, **params):
         inst_fcn_arr=inst_fcn_arr,
     )
 
-    model_Pw *= 1 / np.trapz(model_Pw, wavelengths)
+    model_Pw *= 1 / np.trapz(model_Pw, wavelengths_unitless)
 
     return model_Pw
 

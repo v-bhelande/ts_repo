@@ -40,7 +40,7 @@ _m_e = const.m_e.si.value
 # The probem is a lambda function used in the Particle class...
 
 
-def scattered_power(
+def fast_scattered_power(
     wavelengths,
     probe_wavelength,
     n,
@@ -220,6 +220,252 @@ def fast_spectral_density(
         Skw = np.convolve(Skw, inst_fcn_arr, mode="same")
 
     return np.mean(alpha), Skw
+
+
+@validate_quantities(
+    wavelengths={"can_be_negative": False, "can_be_zero": False},
+    probe_wavelength={"can_be_negative": False, "can_be_zero": False},
+    n={"can_be_negative": False, "can_be_zero": False},
+    Te={"can_be_negative": False, "equivalencies": u.temperature_energy()},
+    Ti={"can_be_negative": False, "equivalencies": u.temperature_energy()},
+)
+def scattered_power(
+    wavelengths: u.nm,
+    probe_wavelength: u.nm,
+    n: u.m ** -3,
+    Te: u.K,
+    Ti: u.K,
+    efract: np.ndarray = None,
+    ifract: np.ndarray = None,
+    ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
+    electron_vel: u.m / u.s = None,
+    ion_vel: u.m / u.s = None,
+    probe_vec=np.array([1, 0, 0]),
+    scatter_vec=np.array([0, 1, 0]),
+    inst_fcn=None,
+) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
+    r"""
+    Calculate the spectral density function for Thomson scattering of a
+    probe laser beam by a multi-species Maxwellian plasma.
+
+    This function calculates the spectral density function for Thomson
+    scattering of a probe laser beam by a plasma consisting of one or more ion
+    species and a one or more thermal electron populations (the entire plasma
+    is assumed to be quasi-neutral)
+
+    .. math::
+        S(k,\omega) = \sum_e \frac{2\pi}{k}
+        \bigg |1 - \frac{\chi_e}{\epsilon} \bigg |^2
+        f_{e0,e} \bigg (\frac{\omega}{k} \bigg ) +
+        \sum_i \frac{2\pi Z_i}{k}
+        \bigg |\frac{\chi_e}{\epsilon} \bigg |^2 f_{i0,i}
+        \bigg ( \frac{\omega}{k} \bigg )
+
+    where :math:`\chi_e` is the electron component susceptibility of the
+    plasma and :math:`\epsilon = 1 + \sum_e \chi_e + \sum_i \chi_i` is the total
+    plasma dielectric  function (with :math:`\chi_i` being the ion component
+    of the susceptibility), :math:`Z_i` is the charge of each ion, :math:`k`
+    is the scattering wavenumber, :math:`\omega` is the scattering frequency,
+    and :math:`f_{e0,e}` and :math:`f_{i0,i}` are the electron and ion velocity
+    distribution functions respectively. In this function the electron and ion
+    velocity distribution functions are assumed to be Maxwellian, making this
+    function equivalent to Eq. 3.4.6 in `Sheffield`_.
+
+    Parameters
+    ----------
+
+    wavelengths : `~astropy.units.Quantity`
+        Array of wavelengths over which the spectral density function
+        will be calculated. (convertible to nm)
+
+    probe_wavelength : `~astropy.units.Quantity`
+        Wavelength of the probe laser. (convertible to nm)
+
+    n : `~astropy.units.Quantity`
+        Mean (0th order) density of all plasma components combined.
+        (convertible to cm^-3.)
+
+    Te : `~astropy.units.Quantity`, shape (Ne, )
+        Temperature of each electron component. Shape (Ne, ) must be equal to the
+        number of electron populations Ne. (in K or convertible to eV)
+
+    Ti : `~astropy.units.Quantity`, shape (Ni, )
+        Temperature of each ion component. Shape (Ni, ) must be equal to the
+        number of ion populations Ni. (in K or convertible to eV)
+
+    efract : array_like, shape (Ne, ), optional
+        An array-like object where each element represents the fraction (or ratio)
+        of the electron population number density to the total electron number density.
+        Must sum to 1.0. Default is a single electron component.
+
+    ifract : array_like, shape (Ni, ), optional
+        An array-like object where each element represents the fraction (or ratio)
+        of the ion population number density to the total ion number density.
+        Must sum to 1.0. Default is a single ion species.
+
+    ion_species : str or `~plasmapy.particles.Particle`, shape (Ni, ), optional
+        A list or single instance of `~plasmapy.particles.Particle`, or strings
+        convertible to `~plasmapy.particles.Particle`. Default is ``'H+'``
+        corresponding to a single species of hydrogen ions.
+
+    electron_vel : `~astropy.units.Quantity`, shape (Ne, 3), optional
+        Velocity of each electron population in the rest frame. (convertible to m/s)
+        If set, overrides electron_vdir and electron_speed.
+        Defaults to a stationary plasma [0, 0, 0] m/s.
+
+    ion_vel : `~astropy.units.Quantity`, shape (Ni, 3), optional
+        Velocity vectors for each electron population in the rest frame
+        (convertible to m/s). If set, overrides ion_vdir and ion_speed.
+        Defaults zero drift for all specified ion species.
+
+    probe_vec : float `~numpy.ndarray`, shape (3, )
+        Unit vector in the direction of the probe laser. Defaults to
+        ``[1, 0, 0]``.
+
+    scatter_vec : float `~numpy.ndarray`, shape (3, )
+        Unit vector pointing from the scattering volume to the detector.
+        Defaults to [0, 1, 0] which, along with the default `probe_vec`,
+        corresponds to a 90 degree scattering angle geometry.
+
+    inst_fcn : function
+        A function representing the instrument function that takes an `~astropy.units.Quantity`
+        of wavelengths (centered on zero) and returns the instrument point
+        spread function. The resulting array will be convolved with the
+        spectral density function before it is returned.
+
+    Returns
+    -------
+    alpha : float
+        Mean scattering parameter, where `alpha` > 1 corresponds to collective
+        scattering and `alpha` < 1 indicates non-collective scattering. The
+        scattering parameter is calculated based on the total plasma density n.
+
+    Skw : `~astropy.units.Quantity`
+        Computed spectral density function over the input `wavelengths` array
+        with units of s/rad.
+
+    Notes
+    -----
+
+    For details, see "Plasma Scattering of Electromagnetic Radiation" by
+    Sheffield et al. `ISBN 978\\-0123748775`_. This code is a modified version
+    of the program described therein.
+
+    For a concise summary of the relevant physics, see Chapter 5 of Derek
+    Schaeffer's thesis, DOI: `10.5281/zenodo.3766933`_.
+
+    .. _`ISBN 978\\-0123748775`: https://www.sciencedirect.com/book/9780123748775/plasma-scattering-of-electromagnetic-radiation
+    .. _`10.5281/zenodo.3766933`: https://doi.org/10.5281/zenodo.3766933
+    .. _`Sheffield`: https://doi.org/10.1016/B978-0-12-374877-5.00003-8
+    """
+
+    # Validate efract
+    if efract is None:
+        efract = np.ones(1)
+    else:
+        efract = np.asarray(efract, dtype=np.float64)
+
+    # Validate ifract
+    if ifract is None:
+        ifract = np.ones(1)
+    else:
+        ifract = np.asarray(ifract, dtype=np.float64)
+
+    if electron_vel is None:
+        electron_vel = np.zeros([efract.size, 3]) * u.m / u.s
+
+    # Condition the electron velocity keywords
+    if ion_vel is None:
+        ion_vel = np.zeros([ifract.size, 3]) * u.m / u.s
+
+    # Condition ion_species
+    if isinstance(ion_species, (str, Particle)):
+        ion_species = [ion_species]
+    if len(ion_species) == 0:
+        raise ValueError("At least one ion species needs to be defined.")
+    for ii, ion in enumerate(ion_species):
+        if isinstance(ion, Particle):
+            continue
+        ion_species[ii] = Particle(ion)
+
+    # Condition Ti
+    if Ti.size == 1:
+        # If a single quantity is given, put it in an array so it's iterable
+        # If Ti.size != len(ion_species), assume same temp. for all species
+        Ti = [Ti.value] * len(ion_species) * Ti.unit
+    elif Ti.size != len(ion_species):
+        raise ValueError(
+            f"Got {Ti.size} ion temperatures and expected {len(ion_species)}."
+        )
+
+    # Make sure the sizes of ion_species, ifract, ion_vel, and Ti all match
+    if (
+        (len(ion_species) != ifract.size)
+        or (ion_vel.shape[0] != ifract.size)
+        or (Ti.size != ifract.size)
+    ):
+        raise ValueError(
+            f"Inconsistent number of species in ifract ({ifract}), "
+            f"ion_species ({len(ion_species)}), Ti ({Ti.size}), "
+            f"and/or ion_vel ({ion_vel.shape[0]})."
+        )
+
+    # Condition Te
+    if Te.size == 1:
+        # If a single quantity is given, put it in an array so it's iterable
+        # If Te.size != len(efract), assume same temp. for all species
+        Te = [Te.value] * len(efract) * Te.unit
+    elif Te.size != len(efract):
+        raise ValueError(
+            f"Got {Te.size} electron temperatures and expected {len(efract)}."
+        )
+
+    # Make sure the sizes of efract, electron_vel, and Te all match
+    if (electron_vel.shape[0] != efract.size) or (Te.size != efract.size):
+        raise ValueError(
+            f"Inconsistent number of electron populations in efract ({efract.size}), "
+            f"Te ({Te.size}), or electron velocity ({electron_vel.shape[0]})."
+        )
+
+    # Create arrays of ion Z and mass from particles given
+    ion_z = np.zeros(len(ion_species))
+    ion_mass = np.zeros(len(ion_species)) * u.kg
+    for i, particle in enumerate(ion_species):
+        ion_z[i] = particle.charge_number
+        ion_mass[i] = particle_mass(particle)
+
+    probe_vec = probe_vec / np.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
+
+    # Apply the insturment function
+    if inst_fcn is not None and callable(inst_fcn):
+        # Create an array of wavelengths of the same size as wavelengths
+        # but centered on zero
+        wspan = (np.max(wavelengths) - np.min(wavelengths)) / 2
+        eval_w = np.linspace(-wspan, wspan, num=wavelengths.size)
+        inst_fcn_arr = inst_fcn(eval_w)
+        inst_fcn_arr *= 1 / np.sum(inst_fcn_arr)
+    else:
+        inst_fcn_arr = None
+
+    Pw = fast_scattered_power(
+        wavelengths.to(u.m).value,
+        probe_wavelength.to(u.m).value,
+        n.to(u.m ** -3).value,
+        Te.to(u.K).value,
+        Ti.to(u.K).value,
+        efract=efract,
+        ifract=ifract,
+        ion_z=ion_z,
+        ion_mass=ion_mass.to(u.kg).value,
+        ion_vel=ion_vel.to(u.m / u.s).value,
+        electron_vel=electron_vel.to(u.m / u.s).value,
+        probe_vec=probe_vec,
+        scatter_vec=scatter_vec,
+        inst_fcn_arr=inst_fcn_arr,
+    )
+
+    return Pw * u.s / u.rad
 
 
 @validate_quantities(

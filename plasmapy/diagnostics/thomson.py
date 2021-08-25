@@ -800,7 +800,7 @@ def _scattered_power_model(wavelengths, settings=None, **params):
     Te *= 11605
     Ti *= 11605
 
-    model_Pw = scattered_power(
+    model_Pw = fast_scattered_power(
         wavelengths_unitless,
         probe_wavelength,
         n,

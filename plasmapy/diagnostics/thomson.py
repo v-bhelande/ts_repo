@@ -1318,39 +1318,11 @@ def _scattered_power_model_arbitrary(
     return model_Pw
 
 
-def scattered_power_model_arbitrary(
-    wavelengths, emodel, imodel, settings, eparams, iparams
-):
+def scattered_power_model_arbitrary(wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
     Also takes in separate electron and ion param sets and formats and merges into a single dict, params
     """
-
-    # Check that models have correct params as inputs
-
-    # Param names from the model functions
-    emodel_param_names = set(inspect.getfullargspec(emodel)[0])
-    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
-
-    # Input param names
-    eparam_names = set(eparams.keys())
-    iparam_names = set(iparams.keys())
-
-    # Raise errors if params are wrong
-    if emodel_param_names != eparam_names:
-        raise ValueError("Electron parameters do not match")
-
-    if imodel_param_names != iparam_names:
-        raise ValueError("Ion parameters do not match")
-
-    # Merge param dicts
-    params = {}
-
-    for myParam in eparams:
-        params["e_" + myParam] = eparams[myParam]
-
-    for myParam in iparams:
-        params["i_" + myParam] = iparams[myParam]
 
     # Make wavelengths dimensionless
     wavelengths_unitless = wavelengths.to(u.m).value

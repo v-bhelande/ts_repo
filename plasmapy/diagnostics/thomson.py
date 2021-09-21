@@ -4,9 +4,12 @@ part of the diagnostics package.
 """
 
 __all__ = [
-    "spectral_density",
-    "scattered_power",
-    "scattered_power_model",
+    "spectral_density_maxwellian",
+    "spectral_density_arbdist",
+    "scattered_power_maxwellian",
+    "scattered_power_arbdist",
+    "scattered_power_model_maxwellian",
+    "scattered_power_model_arbdist",
 ]
 
 import astropy.constants as const
@@ -202,7 +205,7 @@ def chi(f, u_axis, k, xi, v_th, n, particle, phi=1e-5, nPoints=1e4, deltauMax=50
     return coefficient * integral
 
 
-def spectral_density_arbitrary(
+def spectral_density_arbdist(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
     e_velocity_axes: u.m / u.s,
@@ -492,7 +495,7 @@ def spectral_density_arbitrary(
     return np.mean(alpha), Skw
 
 
-def scattered_power(
+def scattered_power_arbdist(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
     e_velocity_axes: u.m / u.s,
@@ -517,7 +520,7 @@ def scattered_power(
 
     print(6)
 
-    alpha, Skw = spectral_density(
+    alpha, Skw = spectral_density_arbdist(
         wavelengths=wavelengths,
         probe_wavelength=probe_wavelength,
         e_velocity_axes=e_velocity_axes,
@@ -540,7 +543,7 @@ def scattered_power(
     return Pw
 
 
-def fast_scattered_power(
+def fast_scattered_power_maxwellian(
     wavelengths,
     probe_wavelength,
     n,
@@ -566,7 +569,7 @@ def fast_scattered_power(
     w = ws - wl
 
     # Compute the spectral density
-    alpha, Skw = fast_spectral_density(
+    alpha, Skw = fast_spectral_density_maxwellian(
         wavelengths=wavelengths,
         probe_wavelength=probe_wavelength,
         n=n,
@@ -592,7 +595,7 @@ def fast_scattered_power(
     return Pw
 
 
-def fast_spectral_density(
+def fast_spectral_density_maxwellian(
     wavelengths,
     probe_wavelength,
     n,
@@ -729,7 +732,7 @@ def fast_spectral_density(
     Te={"can_be_negative": False, "equivalencies": u.temperature_energy()},
     Ti={"can_be_negative": False, "equivalencies": u.temperature_energy()},
 )
-def scattered_power_arbitrary(
+def scattered_power_maxwellian(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
     n: u.m ** -3,
@@ -948,7 +951,7 @@ def scattered_power_arbitrary(
     else:
         inst_fcn_arr = None
 
-    Pw = fast_scattered_power(
+    Pw = fast_scattered_power_maxwellian(
         wavelengths.to(u.m).value,
         probe_wavelength.to(u.m).value,
         n.to(u.m ** -3).value,
@@ -975,7 +978,7 @@ def scattered_power_arbitrary(
     Te={"can_be_negative": False, "equivalencies": u.temperature_energy()},
     Ti={"can_be_negative": False, "equivalencies": u.temperature_energy()},
 )
-def spectral_density(
+def spectral_density_maxwellian(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
     n: u.m ** -3,
@@ -1194,7 +1197,7 @@ def spectral_density(
     else:
         inst_fcn_arr = None
 
-    alpha, Skw = fast_spectral_density(
+    alpha, Skw = fast_spectral_density_maxwellian(
         wavelengths.to(u.m).value,
         probe_wavelength.to(u.m).value,
         n.to(u.m ** -3).value,
@@ -1263,7 +1266,7 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def _scattered_power_model_arbitrary(
+def _scattered_power_model_arbdist(
     wavelengths, emodel, imodel, settings=None, **params
 ):
     """
@@ -1313,31 +1316,32 @@ def _scattered_power_model_arbitrary(
     fi = imodel(**iparams)
 
     # Call scattered power function
-    model_Pw = fast_scattered_power(wavelengths=wavelengths, efn=fe, ifn=fi, **settings)
+    model_Pw = scattered_power_arbdist(
+        wavelengths=wavelengths, efn=fe, ifn=fi, **settings
+    )
 
     return model_Pw
 
 
-def scattered_power_model_arbitrary(wavelengths, emodel, imodel, settings):
+def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
-    Also takes in separate electron and ion param sets and formats and merges into a single dict, params
     """
 
     # Make wavelengths dimensionless
     wavelengths_unitless = wavelengths.to(u.m).value
 
     model = Model(
-        _scattered_power_model_arbitrary,
+        _scattered_power_model_arbdist,
         independent_vars=["wavelengths", "emodel", "imodel"],
         nan_policy="omit",
         settings=settings,
     )
 
-    return model, params
+    return model
 
 
-def _scattered_power_model(wavelengths, settings=None, **params):
+def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     """
     lmfit Model function for fitting Thomson spectra
 
@@ -1374,7 +1378,7 @@ def _scattered_power_model(wavelengths, settings=None, **params):
     Te *= 11605
     Ti *= 11605
 
-    model_Pw = fast_scattered_power(
+    model_Pw = fast_scattered_power_maxwellian(
         wavelengths_unitless,
         probe_wavelength,
         n,
@@ -1394,7 +1398,7 @@ def _scattered_power_model(wavelengths, settings=None, **params):
     return model_Pw
 
 
-def scattered_power_model(wavelengths, settings, params):
+def scattered_power_model_maxwellian(wavelengths, settings, params):
     """
     Returns a `lmfit.Model` function for Thomson spectral density function
 
@@ -1590,7 +1594,7 @@ def scattered_power_model(wavelengths, settings, params):
     # to be used to represnt regions of missing data
     # the "settings" dict is an additional kwarg that will be passed to the model function on every call
     model = Model(
-        _scattered_power_model,
+        _scattered_power_model_maxwellian,
         independent_vars=["wavelengths"],
         nan_policy="omit",
         settings=settings,

@@ -1286,7 +1286,6 @@ def _scattered_power_model_arbdist(
     iparams = {}
 
     for myParam in params.keys():
-
         if myParam[0:2] == "e_":
             eparams[myParam[2:]] = params[myParam]
         elif myParam[0:2] == "i_":
@@ -1297,8 +1296,18 @@ def _scattered_power_model_arbdist(
     # Check that models have correct params as inputs
 
     # Param names from the model functions
-    emodel_param_names = set(inspect.getfullargspec(emodel)[0])
-    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
+    emodel_param_names = inspect.getfullargspec(emodel)[0]
+    imodel_param_names = inspect.getfullargspec(imodel)[0]
+
+    # Check if models take in velocity as an input -- this is ignored as a param
+    if not ("v" in emodel_param_names):
+        raise ValueError("Electron VDF model does not take velocity as input")
+
+    if not ("v" in imodel_param_names):
+        raise ValueError("Ion VDF model does not take velocity as input")
+
+    emodel_param_names.remove("v")
+    imodel_param_names.remove("v")
 
     # Input param names
     eparam_names = set(eparams.keys())

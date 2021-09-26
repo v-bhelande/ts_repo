@@ -1333,8 +1333,8 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Check that models have correct params as inputs
 
     # Param names from the model functions
-    emodel_param_names = inspect.getfullargspec(emodel)[0]
-    imodel_param_names = inspect.getfullargspec(imodel)[0]
+    emodel_param_names = set(inspect.getfullargspec(emodel)[0])
+    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
 
     # Check if models take in velocity as an input -- this is ignored as a param
     if not ("v" in emodel_param_names):

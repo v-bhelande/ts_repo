@@ -1267,7 +1267,7 @@ def _params_to_array(params, prefix, vector=False):
 
 
 def _scattered_power_model_arbdist(
-    wavelengths, emodel, imodel, settings=None, **params
+    v, wavelengths, emodel, imodel, settings=None, **params
 ):
     """
     Non user-facing function for the lmfit model
@@ -1321,8 +1321,8 @@ def _scattered_power_model_arbdist(
         raise ValueError("Ion parameters do not match")
 
     # Create VDFs from model functions
-    fe = emodel(**eparams)
-    fi = imodel(**iparams)
+    fe = emodel(v, **eparams)
+    fi = imodel(v, **iparams)
 
     # Call scattered power function
     model_Pw = scattered_power_arbdist(
@@ -1332,7 +1332,7 @@ def _scattered_power_model_arbdist(
     return model_Pw
 
 
-def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
+def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
     """
@@ -1342,7 +1342,7 @@ def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
 
     model = Model(
         _scattered_power_model_arbdist,
-        independent_vars=["wavelengths", "emodel", "imodel"],
+        independent_vars=["v", "wavelengths", "emodel", "imodel"],
         nan_policy="omit",
         settings=settings,
     )

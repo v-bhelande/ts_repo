@@ -1279,7 +1279,9 @@ def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
     return model
 
 
-def _scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings, params):
+def _scattered_power_model_arbdist(
+    v, wavelengths, emodel, imodel, settings=None, **params
+):
     """
     Non user-facing function for the lmfit model
     wavelengths: list of wavelengths over which scattered power is computed over

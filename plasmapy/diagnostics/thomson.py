@@ -1264,14 +1264,22 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
+def scattered_power_model_arbdist(wavelengths, v, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
 
+    # A version of the settings dict to pass into the model
+    newSettings = settings
+
+    # Add special settings to the dict
+    newSettings["v"] = v
+    newSettings["emodel"] = emodel
+    newSettings["imodel"] = imodel
+
     model = Model(
         _scattered_power_model_arbdist,
-        independent_vars=["wavelengths", "emodel", "imodel"],
+        independent_vars=["wavelengths"],
         nan_policy="omit",
         settings=settings,
     )
@@ -1279,14 +1287,10 @@ def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
     return model
 
 
-def _scattered_power_model_arbdist(
-    wavelengths, emodel, imodel, settings=None, **params
-):
+def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     """
     Non user-facing function for the lmfit model
     wavelengths: list of wavelengths over which scattered power is computed over
-    emodel: function that defines a shape for the electron VDF
-    imodel: function that defines a shape for the ion VDF
     settings: settings for the scattered power function
     eparams: parameters to put into emodel to generate a VDF
     iparams: parameters to put into imodel to generate a VDF
@@ -1300,10 +1304,21 @@ def _scattered_power_model_arbdist(
     eparams = {}
     iparams = {}
 
+    # Extract crucial settings of v, emodel, imodel first
     if "v" in settings:
         v = settings["v"]
     else:
         raise ValueError("Missing velocity array in settings")
+
+    if "emodel" in settings:
+        emodel = settings["emodel"]
+    else:
+        raise ValueError("Missing electron VDF model in settings")
+
+    if "imodel" in settings:
+        emodel = settings["imodel"]
+    else:
+        raise ValueError("Missing ion VDF model in settings")
 
     for myParam in params.keys():
         if myParam[0:2] == "e_":

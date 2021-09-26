@@ -1264,6 +1264,21 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
+def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
+    """
+    User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
+    """
+
+    model = Model(
+        _scattered_power_model_arbdist,
+        independent_vars=["v", "wavelengths", "emodel", "imodel"],
+        nan_policy="omit",
+        settings=settings,
+    )
+
+    return model
+
+
 def _scattered_power_model_arbdist(
     v, wavelengths, emodel, imodel, settings=None, **params
 ):
@@ -1332,21 +1347,6 @@ def _scattered_power_model_arbdist(
     )
 
     return model_Pw
-
-
-def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
-    """
-    User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
-    """
-
-    model = Model(
-        _scattered_power_model_arbdist,
-        independent_vars=["v", "wavelengths", "emodel", "imodel"],
-        nan_policy="omit",
-        settings=settings,
-    )
-
-    return model
 
 
 def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):

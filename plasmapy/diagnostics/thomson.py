@@ -1264,7 +1264,7 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
+def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
@@ -1280,7 +1280,7 @@ def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
 
 
 def _scattered_power_model_arbdist(
-    v, wavelengths, emodel, imodel, settings=None, **params
+    wavelengths, emodel, imodel, settings=None, **params
 ):
     """
     Non user-facing function for the lmfit model
@@ -1296,9 +1296,14 @@ def _scattered_power_model_arbdist(
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
     # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
     # The electron density n is just passed in as "n" and is treated separately from the other params
-
+    # Velocity array is passed into settings
     eparams = {}
     iparams = {}
+
+    if "v" in settings:
+        v = settings["v"]
+    else:
+        raise ValueError("Missing velocity array in settings")
 
     for myParam in params.keys():
         if myParam[0:2] == "e_":

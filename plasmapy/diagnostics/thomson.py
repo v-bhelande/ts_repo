@@ -1320,6 +1320,12 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     else:
         raise ValueError("Missing ion VDF model in settings")
 
+    # Separate out the above 3 settings from the settings which are actually passed into the scattered power
+    Pw_settings = settings
+    Pw_settings.remove("v")
+    Pw_settings.remove("emodel")
+    Pw_settings.remove("imodel")
+
     for myParam in params.keys():
         if myParam[0:2] == "e_":
             eparams[myParam[2:]] = params[myParam]
@@ -1363,7 +1369,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
 
     # Call scattered power function
     model_Pw = scattered_power_arbdist(
-        wavelengths=wavelengths, n=n * u.cm ** -3, efn=fe, ifn=fi, **settings
+        wavelengths=wavelengths, n=n * u.cm ** -3, efn=fe, ifn=fi, **Pw_settings
     )
 
     return model_Pw

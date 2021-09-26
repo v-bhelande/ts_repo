@@ -518,8 +518,6 @@ def scattered_power_arbdist(
     # Compute the frequency shift (required by energy conservation)
     w = ws - wl
 
-    print(6)
-
     alpha, Skw = spectral_density_arbdist(
         wavelengths=wavelengths,
         probe_wavelength=probe_wavelength,
@@ -1282,6 +1280,8 @@ def _scattered_power_model_arbdist(
     # Separate params into electron params and ion params
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
     # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
+    # The electron density n is just passed in as "n" and is treated separately from the other params
+
     eparams = {}
     iparams = {}
 
@@ -1290,6 +1290,8 @@ def _scattered_power_model_arbdist(
             eparams[myParam[2:]] = params[myParam]
         elif myParam[0:2] == "i_":
             iparams[myParam[2:]] = params[myParam]
+        elif myParam == "n":
+            n = params[myParam]
         else:
             raise ValueError("Param name invalid, must start with e_ or i_")
 
@@ -1326,7 +1328,7 @@ def _scattered_power_model_arbdist(
 
     # Call scattered power function
     model_Pw = scattered_power_arbdist(
-        wavelengths=wavelengths, efn=fe, ifn=fi, **settings
+        wavelengths=wavelengths, n=n * u.cm ** -3, efn=fe, ifn=fi, **settings
     )
 
     return model_Pw
@@ -1336,9 +1338,6 @@ def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
     """
-
-    # Make wavelengths dimensionless
-    wavelengths_unitless = wavelengths.to(u.m).value
 
     model = Model(
         _scattered_power_model_arbdist,

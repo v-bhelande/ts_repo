@@ -1271,7 +1271,7 @@ def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
 
     model = Model(
         _scattered_power_model_arbdist,
-        independent_vars=["v", "wavelengths", "emodel", "imodel"],
+        independent_vars=["wavelengths", "emodel", "imodel"],
         nan_policy="omit",
         settings=settings,
     )

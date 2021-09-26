@@ -1266,7 +1266,7 @@ def _params_to_array(params, prefix, vector=False):
 
 def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
     """
-    User facing fitting function, calls _scattered_power_model_arbitrary to obtain lmfit model
+    User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
 
     model = Model(
@@ -1279,9 +1279,7 @@ def scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings):
     return model
 
 
-def _scattered_power_model_arbdist(
-    v, wavelengths, emodel, imodel, settings=None, **params
-):
+def _scattered_power_model_arbdist(v, wavelengths, emodel, imodel, settings, params):
     """
     Non user-facing function for the lmfit model
     wavelengths: list of wavelengths over which scattered power is computed over

@@ -1322,9 +1322,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
 
     # Separate out the above 3 settings from the settings which are actually passed into the scattered power
     Pw_settings = settings
-    Pw_settings.remove("v")
-    Pw_settings.remove("emodel")
-    Pw_settings.remove("imodel")
+    Pw_settings.pop("v")
+    Pw_settings.pop("emodel")
+    Pw_settings.pop("imodel")
 
     for myParam in params.keys():
         if myParam[0:2] == "e_":

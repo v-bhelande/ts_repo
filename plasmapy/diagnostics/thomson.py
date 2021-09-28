@@ -1264,7 +1264,7 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def scattered_power_model_arbdist(wavelengths, v, emodel, imodel, settings):
+def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
@@ -1273,7 +1273,6 @@ def scattered_power_model_arbdist(wavelengths, v, emodel, imodel, settings):
     newSettings = settings
 
     # Add special settings to the dict
-    newSettings["v"] = v
     newSettings["emodel"] = emodel
     newSettings["imodel"] = imodel
 
@@ -1281,7 +1280,7 @@ def scattered_power_model_arbdist(wavelengths, v, emodel, imodel, settings):
         _scattered_power_model_arbdist,
         independent_vars=["wavelengths"],
         nan_policy="omit",
-        settings=settings,
+        settings=newSettings,
     )
 
     return model
@@ -1304,11 +1303,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     eparams = {}
     iparams = {}
 
-    # Extract crucial settings of v, emodel, imodel first
-    if "v" in settings:
-        v = settings["v"]
-    else:
-        raise ValueError("Missing velocity array in settings")
+    # Extract crucial settings of emodel, imodel first
 
     if "emodel" in settings:
         emodel = settings["emodel"]
@@ -1322,7 +1317,6 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
 
     # Separate out the above 3 settings from the settings which are actually passed into the scattered power
     Pw_settings = settings
-    Pw_settings.pop("v")
     Pw_settings.pop("emodel")
     Pw_settings.pop("imodel")
 

@@ -1264,23 +1264,6 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def scattered_power_model_arbdist(wavelengths, settings):
-    """
-    User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
-    """
-
-    # Add special settings to the dict
-
-    model = Model(
-        _scattered_power_model_arbdist,
-        independent_vars=["wavelengths"],
-        nan_policy="omit",
-        settings=settings,
-    )
-
-    return model
-
-
 def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     """
     Non user-facing function for the lmfit model
@@ -1310,7 +1293,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     else:
         raise ValueError("Missing ion VDF model in settings")
 
-    # Separate out the above 3 settings from the settings which are actually passed into the scattered power
+    # Separate out the above 2 settings from the settings which are actually passed into the scattered power
     Pw_settings = settings
     Pw_settings.pop("emodel")
     Pw_settings.pop("imodel")
@@ -1423,6 +1406,23 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     )
 
     return model_Pw
+
+
+def scattered_power_model_arbdist(wavelengths, settings):
+    """
+    User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
+    """
+
+    # Add special settings to the dict
+
+    model = Model(
+        _scattered_power_model_arbdist,
+        independent_vars=["wavelengths"],
+        nan_policy="omit",
+        settings=settings,
+    )
+
+    return model
 
 
 def scattered_power_model_maxwellian(wavelengths, settings, params):

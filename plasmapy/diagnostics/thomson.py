@@ -1358,8 +1358,12 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         raise ValueError("Ion parameters do not match")
 
     # Create VDFs from model functions
-    fe = emodel(v, **eparams)
-    fi = imodel(v, **iparams)
+
+    ve = settings["e_velocity_axis"]
+    vi = settings["i_velocity_axis"]
+
+    fe = emodel(ve, **eparams)
+    fi = imodel(vi, **iparams)
 
     # Call scattered power function
     model_Pw = scattered_power_arbdist(

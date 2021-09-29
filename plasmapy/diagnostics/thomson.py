@@ -1264,23 +1264,18 @@ def _params_to_array(params, prefix, vector=False):
 # ***************************************************************************
 
 
-def scattered_power_model_arbdist(wavelengths, emodel, imodel, settings):
+def scattered_power_model_arbdist(wavelengths, settings):
     """
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
 
-    # A version of the settings dict to pass into the model
-    newSettings = settings
-
     # Add special settings to the dict
-    newSettings["emodel"] = emodel
-    newSettings["imodel"] = imodel
 
     model = Model(
         _scattered_power_model_arbdist,
         independent_vars=["wavelengths"],
         nan_policy="omit",
-        settings=newSettings,
+        settings=settings,
     )
 
     return model

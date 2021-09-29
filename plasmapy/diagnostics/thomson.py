@@ -1337,8 +1337,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
 
     # Create VDFs from model functions
 
-    ve = settings["e_velocity_axes"]
-    vi = settings["i_velocity_axes"]
+    # The 0 indices here are a really bad fix; definitely get a better solution later
+    ve = settings["e_velocity_axes"][0]
+    vi = settings["i_velocity_axes"][0]
 
     fe = emodel(ve, **eparams)
     fi = imodel(vi, **iparams)

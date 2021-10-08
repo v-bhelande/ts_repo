@@ -1290,6 +1290,8 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
             eparams[myParam[2:]] = params[myParam]
         elif myParam[0:2] == "i_":
             iparams[myParam[2:]] = params[myParam]
+        elif myParam == "n":
+            n = params[myParam]
 
     # Create VDFs from model functions
     ve = settings["e_velocity_axes"]

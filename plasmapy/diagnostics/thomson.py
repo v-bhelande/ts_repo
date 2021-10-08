@@ -1282,6 +1282,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     iparams = {}
 
     # Extract crucial settings of emodel, imodel first
+    emodel = settings["emodel"]
+    imodel = settings["imodel"]
+
     for myParam in params.keys():
         if myParam[0:2] == "e_":
             eparams[myParam[2:]] = params[myParam]

@@ -1282,58 +1282,11 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     iparams = {}
 
     # Extract crucial settings of emodel, imodel first
-
-    if "emodel" in settings:
-        emodel = settings["emodel"]
-    else:
-        raise ValueError("Missing electron VDF model in settings")
-
-    if "imodel" in settings:
-        imodel = settings["imodel"]
-    else:
-        raise ValueError("Missing ion VDF model in settings")
-
-    # Separate out the above 2 settings from the settings which are actually passed into the scattered power
-    Pw_settings = settings
-    Pw_settings.pop("emodel")
-    Pw_settings.pop("imodel")
-
     for myParam in params.keys():
         if myParam[0:2] == "e_":
             eparams[myParam[2:]] = params[myParam]
         elif myParam[0:2] == "i_":
             iparams[myParam[2:]] = params[myParam]
-        elif myParam == "n":
-            n = params[myParam]
-        else:
-            raise ValueError("Param name invalid, must start with e_ or i_")
-
-    # Check that models have correct params as inputs
-
-    # Param names from the model functions
-    emodel_param_names = set(inspect.getfullargspec(emodel)[0])
-    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
-
-    # Check if models take in velocity as an input -- this is ignored as a param
-    if not ("v" in emodel_param_names):
-        raise ValueError("Electron VDF model does not take velocity as input")
-
-    if not ("v" in imodel_param_names):
-        raise ValueError("Ion VDF model does not take velocity as input")
-
-    emodel_param_names.remove("v")
-    imodel_param_names.remove("v")
-
-    # Input param names
-    eparam_names = set(eparams.keys())
-    iparam_names = set(iparams.keys())
-
-    # Raise errors if params are wrong
-    if emodel_param_names != eparam_names:
-        raise ValueError("Electron parameters do not match")
-
-    if imodel_param_names != iparam_names:
-        raise ValueError("Ion parameters do not match")
 
     # Create VDFs from model functions
     ve = settings["e_velocity_axes"]
@@ -1342,10 +1295,18 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     fe = emodel(ve, **eparams)
     fi = imodel(vi, **iparams)
 
+    # Remove emodel, imodel temporarily to put settings into the scattered power
+    settings.pop("emodel")
+    settings.pop("imodel")
+
     # Call scattered power function
     model_Pw = scattered_power_arbdist(
-        wavelengths=wavelengths, n=n * u.cm ** -3, efn=fe, ifn=fi, **Pw_settings
+        wavelengths=wavelengths, n=n * u.cm ** -3, efn=fe, ifn=fi, **settings
     )
+
+    # Put settings back now
+    settings["emodel"] = emodel
+    settings["imodel"] = imodel
 
     return model_Pw
 
@@ -1407,10 +1368,67 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     return model_Pw
 
 
-def scattered_power_model_arbdist(wavelengths, settings):
+def scattered_power_model_arbdist(wavelengths, settings, params):
     """
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
+
+    # Separate params into electron params and ion params
+    # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
+    # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
+    # The electron density n is just passed in as "n" and is treated separately from the other params
+    # Velocity array is passed into settings
+    eparams = {}
+    iparams = {}
+
+    # Extract crucial settings of emodel, imodel first
+
+    if "emodel" in settings:
+        emodel = settings["emodel"]
+    else:
+        raise ValueError("Missing electron VDF model in settings")
+
+    if "imodel" in settings:
+        imodel = settings["imodel"]
+    else:
+        raise ValueError("Missing ion VDF model in settings")
+
+    for myParam in params.keys():
+        if myParam[0:2] == "e_":
+            eparams[myParam[2:]] = params[myParam]
+        elif myParam[0:2] == "i_":
+            iparams[myParam[2:]] = params[myParam]
+        elif myParam == "n":
+            n = params[myParam]
+        else:
+            raise ValueError("Param name invalid, must start with e_ or i_")
+
+    # Check that models have correct params as inputs
+
+    # Param names from the model functions
+    emodel_param_names = set(inspect.getfullargspec(emodel)[0])
+    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
+
+    # Check if models take in velocity as an input -- this is ignored as a param
+    if not ("v" in emodel_param_names):
+        raise ValueError("Electron VDF model does not take velocity as input")
+
+    if not ("v" in imodel_param_names):
+        raise ValueError("Ion VDF model does not take velocity as input")
+
+    emodel_param_names.remove("v")
+    imodel_param_names.remove("v")
+
+    # Input param names
+    eparam_names = set(eparams.keys())
+    iparam_names = set(iparams.keys())
+
+    # Raise errors if params are wrong
+    if emodel_param_names != eparam_names:
+        raise ValueError("Electron parameters do not match")
+
+    if imodel_param_names != iparam_names:
+        raise ValueError("Ion parameters do not match")
 
     # Add special settings to the dict
 

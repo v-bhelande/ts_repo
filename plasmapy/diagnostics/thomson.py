@@ -557,6 +557,7 @@ def fast_scattered_power_maxwellian(
     scatter_vec=np.array([0, 1, 0]),
     inst_fcn_arr=None,
 ):
+    _c = const.c.si.value
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)

@@ -20,6 +20,7 @@ import re
 import warnings
 
 from lmfit import Model
+from numba import jit
 from typing import List, Tuple, Union
 
 from plasmapy.formulary.dielectric import fast_permittivity_1D_Maxwellian
@@ -45,6 +46,9 @@ _m_e = const.m_e.si.value
 
 
 # Computes the derivative of a function to 4th order precision. Used for the arbitrary scattered power function.
+
+
+@jit(nopython=True)
 def derivative(f, x, order):
     """
     x: array of x axis points

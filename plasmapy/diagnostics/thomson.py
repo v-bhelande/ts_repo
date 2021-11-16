@@ -138,6 +138,7 @@ def derivative(f, x, order):
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
 
+@jit(nopython=True)
 def chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
     """
     f: array, distribution function of velocities

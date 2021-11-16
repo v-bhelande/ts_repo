@@ -138,7 +138,7 @@ def derivative(f, x, order):
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
 
-def chi(f, u_axis, k, xi, v_th, n, particle, phi=1e-5, nPoints=1e4, deltauMax=50):
+def chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
     """
     f: array, distribution function of velocities
     u_axis: normalized velocity axis
@@ -146,7 +146,8 @@ def chi(f, u_axis, k, xi, v_th, n, particle, phi=1e-5, nPoints=1e4, deltauMax=50
     xi: normalized phase velocities
     v_th: thermal velocity of the distribution, used to normalize the velocity axis
     n: ion density
-    particle: plasmapy particle that makes up the plasma
+    m: particle mass in atomic mass units
+    q: particle charge in fundamental charges
     phi: standoff variable used to avoid singularities
     nPoints: number of points used in integration
     deltauMax: maximum distance on the u axis to integrate to
@@ -175,8 +176,18 @@ def chi(f, u_axis, k, xi, v_th, n, particle, phi=1e-5, nPoints=1e4, deltauMax=50
         )
 
     # Generate integration sample points that avoid the singularity
-    zm = (xi + (phi + (m - 1) * delta).T).T
-    zp = (xi - (phi + (p - 1) * delta).T).T
+
+    # Create empty arrays of the correct size
+    zm = np.zeros((len(xi), len(m)))
+    zp = np.zeros((len(xi), len(n)))
+
+    # Compute arrays of offsets to add to the central points in xi
+    m_delta_array = phi + (m - 1) * delta
+    p_delta_array = phi + (p - 1) * delta
+
+    for i in range(len(xi)):
+        zm[i, :] = xi[i] + m_delta_array
+        zp[i, :] = xi[i] + p_delta_array
 
     # interpolate to get f at the sample points
     gm = np.interp(zm, u_axis, fPrime)
@@ -195,11 +206,13 @@ def chi(f, u_axis, k, xi, v_th, n, particle, phi=1e-5, nPoints=1e4, deltauMax=50
 
     # Convert to np array
     integral = np.array(integral)
-    # Compute plasma frequency squared
-    m = particle.mass.to(u.kg).value
-    q = particle.charge.to(u.C).value
 
-    wpl2 = n * q ** 2 / (m * 8.8541878e-12)
+    # Convert mass and charge to SI units
+    m_SI = m * 1.6605e-27
+    q_SI = q * 1.6022e-19
+
+    # Compute plasma frequency squared
+    wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)
 
     # Coefficient
     coefficient = -wpl2 / k ** 2 / (np.sqrt(2) * v_th)
@@ -442,7 +455,8 @@ def spectral_density_arbdist(
             xi=xie[i],
             v_th=vTe[i],
             n=ne[i],
-            particle=Particle("e"),
+            m=5.4858e-4,
+            q=-1,
         )
 
     # Ion susceptibilities
@@ -456,7 +470,8 @@ def spectral_density_arbdist(
             xi=xii[i],
             v_th=vTi[i],
             n=ni[i],
-            particle=ion_species[i],
+            m=ion_species[i].mass_number,
+            q=ion_species[i].integer_charge,
         )
 
     # Calculate the longitudinal dielectric function

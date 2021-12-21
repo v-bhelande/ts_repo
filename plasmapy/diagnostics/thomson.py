@@ -252,11 +252,13 @@ def spectral_density_arbdist(
     n: u.m ** -3,
     efract: np.ndarray = None,
     ifract: np.ndarray = None,
-    ion_species: Union[str, List[str], Particle, List[Particle]] = "H+",
+    ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
     color="r",
     probe_vec=np.array([1, 0, 0]),
     scatter_vec=np.array([0, 1, 0]),
     scattered_power=False,
+    inner_range=0.1,
+    inner_frac=0.8,
 ) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
     r"""
     Calculate the spectral density function for Thomson scattering of a
@@ -477,8 +479,10 @@ def spectral_density_arbdist(
             xi=xie[i],
             v_th=vTe[i],
             n=ne[i],
-            m=5.4858e-4,
-            q=-1,
+            particle_m=5.4858e-4,
+            particle_q=-1,
+            inner_range=inner_range,
+            inner_frac=inner_frac,
         )
 
     # Ion susceptibilities
@@ -492,8 +496,10 @@ def spectral_density_arbdist(
             xi=xii[i],
             v_th=vTi[i],
             n=ni[i],
-            m=ion_species[i].mass_number,
-            q=ion_species[i].integer_charge,
+            particle_m=ion_species[i].mass_number,
+            particle_q=ion_species[i].integer_charge,
+            inner_range=inner_range,
+            inner_frac=inner_frac,
         )
 
     # Calculate the longitudinal dielectric function

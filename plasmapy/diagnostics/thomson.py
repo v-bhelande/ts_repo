@@ -137,9 +137,21 @@ def derivative(f, x, order):
 # Note xi is scaled by 1/sqrt2 from the versions defined above
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-
-@jit(nopython=True)
-def chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
+# @jit(nopython=True)
+def chi(
+    f,
+    u_axis,
+    k,
+    xi,
+    v_th,
+    n,
+    particle_m,
+    particle_q,
+    phi=1e-3,
+    nPoints=4e2,
+    inner_range=0.1,
+    inner_frac=0.8,
+):
     """
     f: array, distribution function of velocities
     u_axis: normalized velocity axis
@@ -163,40 +175,52 @@ def chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
     gPrime = np.interp(xi, u_axis, fDoublePrime)
 
     # Set up integration ranges and spacing
-    m = np.array([np.arange(1, np.floor(nPoints / 2))] * len(xi))
-    p = np.array([np.arange(1, np.ceil(nPoints / 2))] * len(xi))
-    delta = 2 * deltauMax / nPoints / np.sqrt(2)
+    # We need fine divisions near the asymptote, but not at infinity
+    """
+    #the fractional range of the inner fine divisions near the asymptote
+    inner_range = 0.1
 
-    # Check that bounds of integration are within the given u axis
-    uMax = max(xi) + phi + deltauMax
-    uMin = min(xi) - phi - deltauMax
+    #the fraction of total divisions used in the inner range; should be > inner_range
+    inner_frac = 0.8"""
 
-    if (uMin < u_axis[0]) or (uMax > u_axis[-1]):
-        warnings.warn(
-            "Velocity sample points fall outside of specified velocity distribution"
-        )
+    outer_frac = 1 - inner_frac
+
+    m_inner = np.linspace(0, inner_range, int(np.floor(nPoints / 2 * inner_frac)))
+    p_inner = np.linspace(0, inner_range, int(np.ceil(nPoints / 2 * inner_frac)))
+    m_outer = np.linspace(inner_range, 1, int(np.floor(nPoints / 2 * outer_frac)))
+    p_outer = np.linspace(inner_range, 1, int(np.ceil(nPoints / 2 * outer_frac)))
+
+    m = np.concatenate((m_inner, m_outer))
+    p = np.concatenate((p_inner, p_outer))
 
     # Generate integration sample points that avoid the singularity
-
     # Create empty arrays of the correct size
-    zm = np.zeros((len(xi), len(m)))
-    zp = np.zeros((len(xi), len(n)))
+    zm = np.empty((len(xi), len(m)))
+    zp = np.empty((len(xi), len(p)))
+
+    # Compute maximum width of integration range based on the size of the input array of normalized velocities
+    deltauMax = max(u_axis) - min(u_axis)
 
     # Compute arrays of offsets to add to the central points in xi
-    m_delta_array = phi + (m - 1) * delta
-    p_delta_array = phi + (p - 1) * delta
+    m_point_array = phi + m * deltauMax
+    p_point_array = phi + p * deltauMax
 
+    # Intervals between each integration point
+    m_deltas = np.append(m_point_array[1:] - m_point_array[:-1], [0])
+    p_deltas = np.append(p_point_array[1:] - p_point_array[:-1], [0])
+
+    # The integration points on u
     for i in range(len(xi)):
-        zm[i, :] = xi[i] + m_delta_array
-        zp[i, :] = xi[i] + p_delta_array
+        zm[i, :] = xi[i] + m_point_array
+        zp[i, :] = xi[i] - p_point_array
 
     # interpolate to get f at the sample points
     gm = np.interp(zm, u_axis, fPrime)
     gp = np.interp(zp, u_axis, fPrime)
 
     # Evaluate integral (df/du / (u - xi)) du
-    M_array = delta * gm / (phi + (m - 1) * delta)
-    P_array = delta * gp / (phi + (p - 1) * delta)
+    M_array = m_deltas * gm / m_point_array
+    P_array = p_deltas * gp / p_point_array
 
     integral = (
         np.sum(M_array, axis=1)
@@ -205,12 +229,9 @@ def chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
         + 2 * phi * gPrime
     )
 
-    # Convert to np array
-    integral = np.array(integral)
-
     # Convert mass and charge to SI units
-    m_SI = m * 1.6605e-27
-    q_SI = q * 1.6022e-19
+    m_SI = particle_m * 1.6605e-27
+    q_SI = particle_q * 1.6022e-19
 
     # Compute plasma frequency squared
     wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)

@@ -149,7 +149,7 @@ def chi(
     particle_q,
     phi=1e-5,
     nPoints=1e3,
-    inner_range=0.2,
+    inner_range=0.3,
     inner_frac=0.8,
 ):
     """

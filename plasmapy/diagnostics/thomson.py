@@ -148,7 +148,7 @@ def chi(
     particle_m,
     particle_q,
     phi=1e-3,
-    nPoints=8e2,
+    nPoints=4e2,
     inner_range=0.1,
     inner_frac=0.8,
 ):

@@ -5,7 +5,7 @@ part of the diagnostics package.
 
 __all__ = [
     "spectral_density_maxwellian",
-    "spectral_density_arbdist",
+    "old_spectral_density_arbdist",
     "scattered_power_model_maxwellian",
     "scattered_power_model_arbdist",
 ]
@@ -25,6 +25,8 @@ from plasmapy.formulary.dielectric import fast_permittivity_1D_Maxwellian
 from plasmapy.formulary.parameters import fast_plasma_frequency, fast_thermal_speed
 from plasmapy.particles import Particle, particle_mass
 from plasmapy.utils.decorators import validate_quantities
+
+from scipy.integrate import simpson
 
 _c = const.c.si.value  # Make sure C is in SI units
 _e = const.e.si.value
@@ -131,13 +133,97 @@ def derivative(f, x, order):
     return fPrime
 
 
+
+
 # A function for computing susceptibility constants
 # Apply Sheffield (3.3.9) with the following substitutions
 # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
 # Note xi is scaled by 1/sqrt2 from the versions defined above
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-# @jit(nopython=True)
+@jit(nopython=True)
+def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
+    """
+    f: array, distribution function of velocities
+    u_axis: normalized velocity axis
+    k: wavenumber
+    xi: normalized phase velocities
+    v_th: thermal velocity of the distribution, used to normalize the velocity axis
+    n: ion density
+    m: particle mass in atomic mass units
+    q: particle charge in fundamental charges
+    phi: standoff variable used to avoid singularities
+    nPoints: number of points used in integration
+    deltauMax: maximum distance on the u axis to integrate to
+    """
+
+    # Take f' = df/du and f" = d^2f/d^2u
+    fPrime = derivative(f=f, x=u_axis, order=1)
+    fDoublePrime = derivative(f=f, x=u_axis, order=2)
+
+    # Interpolate f' and f" onto xi
+    g = np.interp(xi, u_axis, fPrime)
+    gPrime = np.interp(xi, u_axis, fDoublePrime)
+
+    # Set up integration ranges and spacing
+    m = np.array([np.arange(1, np.floor(nPoints / 2))] * len(xi))
+    p = np.array([np.arange(1, np.ceil(nPoints / 2))] * len(xi))
+    delta = 2 * deltauMax / nPoints / np.sqrt(2)
+
+    # Check that bounds of integration are within the given u axis
+    uMax = max(xi) + phi + deltauMax
+    uMin = min(xi) - phi - deltauMax
+
+    if (uMin < u_axis[0]) or (uMax > u_axis[-1]):
+        warnings.warn(
+            "Velocity sample points fall outside of specified velocity distribution"
+        )
+
+    # Generate integration sample points that avoid the singularity
+
+    # Create empty arrays of the correct size
+    zm = np.zeros((len(xi), len(m)))
+    zp = np.zeros((len(xi), len(n)))
+
+    # Compute arrays of offsets to add to the central points in xi
+    m_delta_array = phi + (m - 1) * delta
+    p_delta_array = phi + (p - 1) * delta
+
+    for i in range(len(xi)):
+        zm[i, :] = xi[i] + m_delta_array
+        zp[i, :] = xi[i] + p_delta_array
+
+    # interpolate to get f at the sample points
+    gm = np.interp(zm, u_axis, fPrime)
+    gp = np.interp(zp, u_axis, fPrime)
+
+    # Evaluate integral (df/du / (u - xi)) du
+    M_array = delta * gm / (phi + (m - 1) * delta)
+    P_array = delta * gp / (phi + (p - 1) * delta)
+
+    integral = (
+        np.sum(M_array, axis=1)
+        - np.sum(P_array, axis=1)
+        + 1j * np.pi * g
+        + 2 * phi * gPrime
+    )
+
+    # Convert to np array
+    integral = np.array(integral)
+
+    # Convert mass and charge to SI units
+    m_SI = m * 1.6605e-27
+    q_SI = q * 1.6022e-19
+
+    # Compute plasma frequency squared
+    wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)
+
+    # Coefficient
+    coefficient = -wpl2 / k ** 2 / (np.sqrt(2) * v_th)
+
+    return coefficient * integral
+
+
 def chi(
     f,
     u_axis,
@@ -242,7 +328,8 @@ def chi(
     return coefficient * integral
 
 
-def spectral_density_arbdist(
+
+def old_spectral_density_arbdist(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
     e_velocity_axes: u.m / u.s,
@@ -260,85 +347,6 @@ def spectral_density_arbdist(
     inner_range=0.1,
     inner_frac=0.8,
 ) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
-    r"""
-    Calculate the spectral density function for Thomson scattering of a
-    probe laser beam by a multi-species Maxwellian plasma.
-    This function calculates the spectral density function for Thomson
-    scattering of a probe laser beam by a plasma consisting of one or more ion
-    species and a one or more thermal electron populations (the entire plasma
-    is assumed to be quasi-neutral)
-    .. math::
-        S(k,\omega) = \sum_e \frac{2\pi}{k}
-        \bigg |1 - \frac{\chi_e}{\epsilon} \bigg |^2
-        f_{e0,e} \bigg (\frac{\omega}{k} \bigg ) +
-        \sum_i \frac{2\pi Z_i}{k}
-        \bigg |\frac{\chi_e}{\epsilon} \bigg |^2 f_{i0,i}
-        \bigg ( \frac{\omega}{k} \bigg )
-    where :math:`\chi_e` is the electron component susceptibility of the
-    plasma and :math:`\epsilon = 1 + \sum_e \chi_e + \sum_i \chi_i` is the total
-    plasma dielectric  function (with :math:`\chi_i` being the ion component
-    of the susceptibility), :math:`Z_i` is the charge of each ion, :math:`k`
-    is the scattering wavenumber, :math:`\omega` is the scattering frequency,
-    and :math:`f_{e0,e}` and :math:`f_{i0,i}` are the electron and ion velocity
-    distribution functions respectively. In this function the electron and ion
-    velocity distribution functions are assumed to be Maxwellian, making this
-    function equivalent to Eq. 3.4.6 in `Sheffield`_.
-    Parameters
-    ----------
-    wavelengths : `~astropy.units.Quantity`
-        Array of wavelengths over which the spectral density function
-        will be calculated. (convertible to nm)
-    probe_wavelength : `~astropy.units.Quantity`
-        Wavelength of the probe laser. (convertible to nm)
-    n : `~astropy.units.Quantity`
-        Mean (0th order) density of all plasma components combined.
-        (convertible to cm^-3.)
-    velocity_bins: `~astropy.units.Quantity`, shape (N, )
-        Arrays of velocity axis bins corresponding to each frequency array. (convertible to m/s)
-    fn_arrays: `~astropy.units.Quantity`, shape (N, )
-        Frequency arrays for each ion species; each index should be of the same shape as corresponding velocity_bins index.
-    efract : array_like, shape (Ne, ), optional
-        An array-like object where each element represents the fraction (or ratio)
-        of the electron component number density to the total electron number density.
-        Must sum to 1.0. Default is a single electron component.
-    ifract : array_like, shape (Ni, ), optional
-        An array-like object where each element represents the fraction (or ratio)
-        of the ion component number density to the total ion number density.
-        Must sum to 1.0. Default is a single ion species.
-    ion_species : str or `~plasmapy.particles.Particle`, shape (N, ), optional
-        A list or single instance of `~plasmapy.particles.Particle`, or strings
-        convertible to `~plasmapy.particles.Particle`. Default is `'H+'`
-        corresponding to a single species of hydrogen ions.
-    probe_vec : float `~numpy.ndarray`, shape (3, )
-        Unit vector in the direction of the probe laser. Defaults to
-        [1, 0, 0].
-    scatter_vec : float `~numpy.ndarray`, shape (3, )
-        Unit vector pointing from the scattering volume to the detector.
-        Defaults to [0, 1, 0] which, along with the default `probe_vec`,
-        corresponds to a 90 degree scattering angle geometry.
-    scattered_power: boolean
-        If False, function will return the normal spectral density for arbitrary distribution.
-        If True, output will be multiplied by the relevant factor (to first order in velocity) to convert spectral density to the scattered power.
-    Returns
-    -------
-    alpha : float
-        Mean scattering parameter, where `alpha` > 1 corresponds to collective
-        scattering and `alpha` < 1 indicates non-collective scattering. The
-        scattering parameter is calculated based on the total plasma density n.
-    Skw : `~astropy.units.Quantity`
-        Computed spectral density function over the input `wavelengths` array
-        with units of s/rad.
-    Notes
-    -----
-    For details, see "Plasma Scattering of Electromagnetic Radiation" by
-    Sheffield et al. `ISBN 978\\-0123748775`_. This code is a modified version
-    of the program described therein.
-    For a concise summary of the relevant physics, see Chapter 5 of Derek
-    Schaeffer's thesis, DOI: `10.5281/zenodo.3766933`_.
-    .. _`ISBN 978\\-0123748775`: https://www.sciencedirect.com/book/9780123748775/plasma-scattering-of-electromagnetic-radiation
-    .. _`10.5281/zenodo.3766933`: https://doi.org/10.5281/zenodo.3766933
-    .. _`Sheffield`: https://doi.org/10.1016/B978-0-12-374877-5.00003-8
-    """
     if efract is None:
         efract = np.ones(1)
     else:
@@ -469,7 +477,7 @@ def spectral_density_arbdist(
     # Electron susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i in range(len(efract)):
-        chiE[i, :] = chi(
+        chiE[i, :] = old_chi(
             f=efn[i],
             u_axis=(
                 e_velocity_axes[i] - np.sum(np.abs(electron_vel[i]) ** 2) ** (1 / 2)
@@ -479,16 +487,14 @@ def spectral_density_arbdist(
             xi=xie[i],
             v_th=vTe[i],
             n=ne[i],
-            particle_m=5.4858e-4,
-            particle_q=-1,
-            inner_range=inner_range,
-            inner_frac=inner_frac,
+            m=5.4858e-4,
+            q=-1
         )
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for i in range(len(ifract)):
-        chiI[i, :] = chi(
+        chiI[i, :] = old_chi(
             f=ifn[i],
             u_axis=(i_velocity_axes[i] - np.sum(np.abs(ion_vel[i]) ** 2) ** (1 / 2))
             / (np.sqrt(2) * vTi[i]),
@@ -496,10 +502,8 @@ def spectral_density_arbdist(
             xi=xii[i],
             v_th=vTi[i],
             n=ni[i],
-            particle_m=ion_species[i].mass_number,
-            particle_q=ion_species[i].integer_charge,
-            inner_range=inner_range,
-            inner_frac=inner_frac,
+            m=ion_species[i].mass_number,
+            q=ion_species[i].integer_charge,
         )
 
     # Calculate the longitudinal dielectric function

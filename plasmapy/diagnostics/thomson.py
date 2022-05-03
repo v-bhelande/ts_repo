@@ -180,7 +180,7 @@ def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50
 
     # Create empty arrays of the correct size
     zm = np.zeros((len(xi), len(m)))
-    zp = np.zeros((len(xi), len(n)))
+    zp = np.zeros((len(xi), len(p)))
 
     # Compute arrays of offsets to add to the central points in xi
     m_delta_array = phi + (m - 1) * delta
@@ -220,7 +220,6 @@ def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50
 
     return coefficient * integral
 
-@jit(nopython=True)
 def chi(
     f,
     u_axis,

@@ -26,8 +26,6 @@ from plasmapy.formulary.parameters import fast_plasma_frequency, fast_thermal_sp
 from plasmapy.particles import Particle, particle_mass
 from plasmapy.utils.decorators import validate_quantities
 
-from scipy.integrate import simpson
-
 _c = const.c.si.value  # Make sure C is in SI units
 _e = const.e.si.value
 _m_p = const.m_p.si.value

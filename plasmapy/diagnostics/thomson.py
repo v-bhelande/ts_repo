@@ -139,7 +139,6 @@ def derivative(f, x, order):
 # Note xi is scaled by 1/sqrt2 from the versions defined above
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-@jit(nopython=True)
 def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50):
     """
     f: array, distribution function of velocities
@@ -164,8 +163,8 @@ def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50
     gPrime = np.interp(xi, u_axis, fDoublePrime)
 
     # Set up integration ranges and spacing
-    m = np.array([np.arange(1, np.floor(nPoints / 2))]) * len(xi)
-    p = np.array([np.arange(1, np.ceil(nPoints / 2))]) * len(xi)
+    m = np.array([np.arange(1, np.floor(nPoints / 2))] * len(xi))
+    p = np.array([np.arange(1, np.ceil(nPoints / 2))] * len(xi))
     delta = 2 * deltauMax / nPoints / np.sqrt(2)
 
     # Check that bounds of integration are within the given u axis
@@ -221,7 +220,7 @@ def old_chi(f, u_axis, k, xi, v_th, n, m, q, phi=1e-5, nPoints=1e4, deltauMax=50
 
     return coefficient * integral
 
-
+@jit(nopython=True)
 def chi(
     f,
     u_axis,

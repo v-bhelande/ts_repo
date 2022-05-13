@@ -546,8 +546,8 @@ def spectral_density_arbdist(
         # Conversion factor
         Skw = Skw * (1 - 2 * w / wl)
 
-        # Normalize result to have integral 1
-        Skw = Skw / (np.trapz(Skw, wavelengths))
+    # Normalize result to have integral 1
+    Skw = Skw / (np.trapz(Skw, wavelengths))
 
     return np.mean(alpha), Skw
 
@@ -682,7 +682,7 @@ def fast_spectral_density_maxwellian(
 
     if scattered_power:
         Skw = (1 - 2 * w / wl) * Skw
-        Skw = Skw / (np.trapz(Skw, wavelengths))
+    Skw = Skw / (np.trapz(Skw, wavelengths))
 
     return np.mean(alpha), Skw
 

@@ -1094,7 +1094,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         scatter_vec=scatter_vec,
         inst_fcn_arr=inst_fcn_arr,
         scattered_power=True,
-    )
+    )[1]
 
     return model_Pw
 

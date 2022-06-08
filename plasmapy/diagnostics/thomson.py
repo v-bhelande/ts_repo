@@ -1077,8 +1077,11 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     # Convert temperatures from eV to Kelvin (required by fast_spectral_density)
     Te *= 11605
     Ti *= 11605
+    
+    #Convert density from cm^-3 to m^-3
+    n *= 1e6
 
-    model_Pw = fast_spectral_density_maxwellian(
+    alpha, model_Pw = fast_spectral_density_maxwellian(
         wavelengths_unitless,
         probe_wavelength,
         n,
@@ -1094,7 +1097,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         scatter_vec=scatter_vec,
         inst_fcn_arr=inst_fcn_arr,
         scattered_power=True,
-    )[1]
+    )
 
     return model_Pw
 

@@ -44,8 +44,6 @@ _m_e = const.m_e.si.value
 
 
 # Computes the derivative of a function to 4th order precision. Used for the arbitrary scattered power function.
-
-
 @jit(nopython=True)
 def derivative(f, x, order):
     """
@@ -241,6 +239,31 @@ def chi(
 
     return coefficient * integral
 
+
+
+def nanintegral(f, x):
+    '''Integral f dx while skipping over any nan terms shared between f and x; 
+    can be used to account for notch in detector.'''
+    
+    #Check input validity
+    if len(f) != len(x):
+        raise ValueError("f and x must be the same length")
+    elif np.isnan(f) != np.isnan(x):
+        raise ValueError("NaN terms must match in f and x")
+    
+    #Split arrays by nan
+    f_split = [f[s] for s in np.ma.clump_unmasked(np.ma.masked_invalid(f))]
+    x_split = [x[s] for s in np.ma.clump_unmasked(np.ma.masked_invalid(x))]
+    
+    #Integrate each piece separately
+    total_integral = 0
+    for i in range(len(f)):
+        total_integral += np.trapz(f_split[i], x_split[i])
+    
+    return total_integral
+        
+    
+    
 
 def spectral_density_arbdist(
     wavelengths: u.nm,
@@ -547,7 +570,7 @@ def spectral_density_arbdist(
         Skw = Skw * (1 - 2 * w / wl)
 
     # Normalize result to have integral 1
-    Skw = Skw / (np.trapz(Skw, wavelengths))
+    Skw = Skw / (nanintegral(Skw, wavelengths))
 
     return np.mean(alpha), Skw
 
@@ -682,7 +705,7 @@ def fast_spectral_density_maxwellian(
 
     if scattered_power:
         Skw = (1 - 2 * w / wl) * Skw
-    Skw = Skw / (np.trapz(Skw, wavelengths))
+    Skw = Skw / (nanintegral(Skw, wavelengths))
 
     return np.mean(alpha), Skw
 

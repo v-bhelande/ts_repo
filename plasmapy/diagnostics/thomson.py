@@ -257,7 +257,7 @@ def nanintegral(f, x):
     
     #Integrate each piece separately
     total_integral = 0
-    for i in range(len(f)):
+    for i in range(len(f_split)):
         total_integral += np.trapz(f_split[i], x_split[i])
     
     return total_integral

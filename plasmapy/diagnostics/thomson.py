@@ -248,7 +248,7 @@ def nanintegral(f, x):
     #Check input validity
     if len(f) != len(x):
         raise ValueError("f and x must be the same length")
-    elif np.isnan(f) != np.isnan(x):
+    elif np.all(np.isnan(f) != np.isnan(x)):
         raise ValueError("NaN terms must match in f and x")
     
     #Split arrays by nan

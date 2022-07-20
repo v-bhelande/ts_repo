@@ -267,13 +267,13 @@ def nanintegral(f, x):
 
 def spectral_density_arbdist(
     wavelengths: u.nm,
-    notches: u.nm,
     probe_wavelength: u.nm,
     e_velocity_axes: u.m / u.s,
     i_velocity_axes: u.m / u.s,
     efn: u.nm ** -1,
     ifn: u.nm ** -1,
     n: u.m ** -3,
+    notches: u.nm = None,
     efract: np.ndarray = None,
     ifract: np.ndarray = None,
     ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
@@ -589,11 +589,11 @@ def spectral_density_arbdist(
 
 def fast_spectral_density_maxwellian(
     wavelengths,
-    notches,
     probe_wavelength,
     n,
     Te,
     Ti,
+    notches: u.nm = None,
     efract: np.ndarray = np.array([1.0]),
     ifract: np.ndarray = np.array([1.0]),
     ion_z=np.array([1]),
@@ -1132,11 +1132,11 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
 
     alpha, model_Pw = fast_spectral_density_maxwellian(
         wavelengths_unitless,
-        notches,
         probe_wavelength,
         n,
         Te,
         Ti,
+        notches = notches,
         efract=efract,
         ifract=ifract,
         ion_z=ion_z,

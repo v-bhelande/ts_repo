@@ -1099,6 +1099,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     wavelengths_unitless = wavelengths.to(u.m).value
 
     # LOAD FROM SETTINGS
+    notches = settings["notches"]
     ion_z = settings["ion_z"]
     ion_mass = settings["ion_mass"]
     probe_vec = settings["probe_vec"]
@@ -1130,6 +1131,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
 
     alpha, model_Pw = fast_spectral_density_maxwellian(
         wavelengths_unitless,
+        notches,
         probe_wavelength,
         n,
         Te,

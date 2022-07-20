@@ -578,7 +578,7 @@ def spectral_density_arbdist(
             
         x0 = np.argmin(np.abs(wavelengths - myNotch[0]))
         x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
-        Skw[x0, x1] = 0
+        Skw[x0:x1] = 0
         
 
     # Normalize result to have integral 1
@@ -726,7 +726,7 @@ def fast_spectral_density_maxwellian(
             
         x0 = np.argmin(np.abs(wavelengths - myNotch[0]))
         x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
-        Skw[x0, x1] = 0
+        Skw[x0:x1] = 0
         
     Skw = Skw / (nanintegral(Skw, wavelengths))
 

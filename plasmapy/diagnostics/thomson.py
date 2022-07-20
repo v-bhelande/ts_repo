@@ -267,6 +267,7 @@ def nanintegral(f, x):
 
 def spectral_density_arbdist(
     wavelengths: u.nm,
+    notches: u.nm,
     probe_wavelength: u.nm,
     e_velocity_axes: u.m / u.s,
     i_velocity_axes: u.m / u.s,
@@ -568,15 +569,26 @@ def spectral_density_arbdist(
     if scattered_power:
         # Conversion factor
         Skw = Skw * (1 - 2 * w / wl)
+    
+    #Account for notch(es)
+    for myNotch in notches:
+        if len(myNotch) != 2:
+            raise ValueError("Notches must be pairs of values")
+            
+        x0 = np.argmin(np.abs(wavelengths - myNotch[0]))
+        x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
+        Skw[x0, x1] = 0
+        
 
     # Normalize result to have integral 1
-    Skw = Skw / (nanintegral(Skw, wavelengths))
+    Skw = Skw / np.trapz(Skw, wavelengths)
 
     return np.mean(alpha), Skw
 
 
 def fast_spectral_density_maxwellian(
     wavelengths,
+    notches,
     probe_wavelength,
     n,
     Te,
@@ -705,6 +717,16 @@ def fast_spectral_density_maxwellian(
 
     if scattered_power:
         Skw = (1 - 2 * w / wl) * Skw
+    
+    #Account for notch(es)
+    for myNotch in notches:
+        if len(myNotch) != 2:
+            raise ValueError("Notches must be pairs of values")
+            
+        x0 = np.argmin(np.abs(wavelengths - myNotch[0]))
+        x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
+        Skw[x0, x1] = 0
+        
     Skw = Skw / (nanintegral(Skw, wavelengths))
 
     return np.mean(alpha), Skw
@@ -719,6 +741,7 @@ def fast_spectral_density_maxwellian(
 )
 def spectral_density_maxwellian(
     wavelengths: u.nm,
+    notches: u.nm,
     probe_wavelength: u.nm,
     n: u.m ** -3,
     Te: u.K,
@@ -939,6 +962,7 @@ def spectral_density_maxwellian(
 
     alpha, Skw = fast_spectral_density_maxwellian(
         wavelengths.to(u.m).value,
+        notches.to(u.m).value,
         probe_wavelength.to(u.m).value,
         n.to(u.m ** -3).value,
         Te.to(u.K).value,

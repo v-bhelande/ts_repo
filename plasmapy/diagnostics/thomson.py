@@ -626,6 +626,9 @@ def fast_spectral_density_maxwellian(
 
     if ion_vel is None:
         ion_vel = np.zeros([ifract.size, 3])
+    
+    if notches is None:
+        notches = [(0, 0)]
 
     scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
 

@@ -375,13 +375,17 @@ def spectral_density_arbdist(
 
     # Convert everything to SI, strip units
     wavelengths = wavelengths.to(u.m).value
-    notches = notches.to(u.m).value
     probe_wavelength = probe_wavelength.to(u.m).value
     e_velocity_axes = e_velocity_axes.to(u.m / u.s).value
     i_velocity_axes = i_velocity_axes.to(u.m / u.s).value
     efn = efn.to(u.s / u.m).value
     ifn = ifn.to(u.s / u.m).value
     n = n.to(u.m ** -3).value
+    
+    #Check for notches
+    if not (notches is None):
+        notches = notches.to(u.m).value
+    
     # Condition ion_species
     if isinstance(ion_species, (str, Particle)):
         ion_species = [ion_species]
@@ -593,7 +597,7 @@ def fast_spectral_density_maxwellian(
     n,
     Te,
     Ti,
-    notches: u.nm = None,
+    notches: np.ndarray = None,
     efract: np.ndarray = np.array([1.0]),
     ifract: np.ndarray = np.array([1.0]),
     ion_z=np.array([1]),
@@ -742,11 +746,11 @@ def fast_spectral_density_maxwellian(
 )
 def spectral_density_maxwellian(
     wavelengths: u.nm,
-    notches: u.nm,
     probe_wavelength: u.nm,
     n: u.m ** -3,
     Te: u.K,
     Ti: u.K,
+    notches: u.nm = None,
     efract: np.ndarray = None,
     ifract: np.ndarray = None,
     ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
@@ -890,6 +894,11 @@ def spectral_density_maxwellian(
     # Condition the electron velocity keywords
     if ion_vel is None:
         ion_vel = np.zeros([ifract.size, 3]) * u.m / u.s
+    
+    if not(notches is None):
+        notches_dimless = notches.to(u.nm).value
+    else:
+        notches_dimless = None
 
     # Condition ion_species
     if isinstance(ion_species, (str, Particle)):
@@ -963,11 +972,11 @@ def spectral_density_maxwellian(
 
     alpha, Skw = fast_spectral_density_maxwellian(
         wavelengths.to(u.m).value,
-        notches.to(u.m).value,
         probe_wavelength.to(u.m).value,
         n.to(u.m ** -3).value,
         Te.to(u.K).value,
         Ti.to(u.K).value,
+        notches_dimless
         efract=efract,
         ifract=ifract,
         ion_z=ion_z,

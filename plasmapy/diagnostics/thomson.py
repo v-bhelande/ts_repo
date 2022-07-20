@@ -375,6 +375,7 @@ def spectral_density_arbdist(
 
     # Convert everything to SI, strip units
     wavelengths = wavelengths.to(u.m).value
+    notches = notches.to(u.m).value
     probe_wavelength = probe_wavelength.to(u.m).value
     e_velocity_axes = e_velocity_axes.to(u.m / u.s).value
     i_velocity_axes = i_velocity_axes.to(u.m / u.s).value

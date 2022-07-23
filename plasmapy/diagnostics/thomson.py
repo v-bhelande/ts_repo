@@ -550,7 +550,10 @@ def spectral_density_arbdist(
     # Convert to power spectrum if option is enabled
     if scattered_power:
         # Conversion factor
-        Skw = Skw * (1 + 2 * w / wl)
+        Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2) 
+        #this is to convert from S(frequency) to S(wavelength), there is an 
+        #extra 2 * pi * c here but that should be removed by normalization
+        
     
     #Account for notch(es)
     for myNotch in notches:
@@ -701,7 +704,7 @@ def fast_spectral_density_maxwellian(
         Skw = np.convolve(Skw, inst_fcn_arr, mode="same")
 
     if scattered_power:
-        Skw = (1 + 2 * w / wl) * Skw
+        Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2) 
     
     #Account for notch(es)
     for myNotch in notches:

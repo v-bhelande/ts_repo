@@ -240,6 +240,214 @@ def chi(
     return coefficient * integral
 
 
+def fast_spectral_density_arbdist(
+    wavelengths,
+    probe_wavelength,
+    e_velocity_axes,
+    i_velocity_axes,
+    efn,
+    ifn,
+    n,
+    notches: u.nm = None,
+    efract: np.ndarray = None,
+    ifract: np.ndarray = None,
+    ion_z=np.array([1]),
+    ion_mass=np.array([1]),
+    probe_vec=np.array([1, 0, 0]),
+    scatter_vec=np.array([0, 1, 0]),
+    scattered_power=False,
+    inner_range=0.1,
+    inner_frac=0.8,
+) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
+    
+    # Ensure unit vectors are normalized
+    probe_vec = probe_vec / np.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
+
+    # Normal vector along k, assume all velocities lie in this direction
+
+    k_vec = scatter_vec - probe_vec
+    k_vec = k_vec / np.linalg.norm(k_vec)  # normalization
+
+    # Compute drift velocities and thermal speeds for all electrons and ion species
+    electron_vel = []  # drift velocities (vector)
+    vTe = []  # thermal speeds (scalar)
+
+    # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
+    for i, fn in enumerate(efn):
+        v_axis = e_velocity_axes[i]
+        moment1_integrand = np.multiply(fn, v_axis)
+        bulk_velocity = np.trapz(moment1_integrand, v_axis)
+        moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
+        electron_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
+        vTe.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
+
+    electron_vel = np.array(electron_vel)
+    vTe = np.array(vTe)
+
+    ion_vel = []
+    vTi = []
+    for i, fn in enumerate(ifn):
+        v_axis = i_velocity_axes[i]
+        moment1_integrand = np.multiply(fn, v_axis)
+        bulk_velocity = np.trapz(moment1_integrand, v_axis)
+        moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
+        ion_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
+        vTi.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
+
+    ion_vel = np.array(ion_vel)
+    vTi = np.array(vTi)
+
+    # Define some constants
+    C = 299792458  # speed of light
+
+    # Calculate plasma parameters
+
+    zbar = np.sum(ifract * ion_z)
+    ne = efract * n
+    ni = ifract * n / zbar  # ne/zbar = sum(ni)
+    # wpe is calculated for the entire plasma (all electron populations combined)
+    # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
+
+    wpe = np.sqrt(n * 3182.60735)
+
+    # Convert wavelengths to angular frequencies (electromagnetic waves, so
+    # phase speed is c)
+    ws = 2 * np.pi * C / wavelengths
+    wl = 2 * np.pi * C / probe_wavelength
+
+    # Compute the frequency shift (required by energy conservation)
+    w = ws - wl
+
+    # Compute the wavenumbers in the plasma
+    # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
+    ks = np.sqrt(ws ** 2 - wpe ** 2) / C
+    kl = np.sqrt(wl ** 2 - wpe ** 2) / C
+
+    # Compute the wavenumber shift (required by momentum conservation)
+    scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
+    # Eq. 1.7.10 in Sheffield
+    k = np.sqrt(ks ** 2 + kl ** 2 - 2 * ks * kl * np.cos(scattering_angle))
+
+    # Compute Doppler-shifted frequencies for both the ions and electrons
+    # Matmul is simultaneously conducting dot product over all wavelengths
+    # and ion components
+    w_e = w - np.matmul(electron_vel, np.outer(k, k_vec).T)
+    w_i = w - np.matmul(ion_vel, np.outer(k, k_vec).T)
+
+    # Compute the scattering parameter alpha
+    # expressed here using the fact that v_th/w_p = root(2) * Debye length
+    alpha = np.sqrt(2) * wpe / np.outer(k, vTe)
+
+    # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
+    xie = (np.outer(1 / vTe, 1 / k) * w_e) / np.sqrt(2)
+    xii = (np.outer(1 / vTi, 1 / k) * w_i) / np.sqrt(2)
+
+    # Calculate the susceptibilities
+    # Apply Sheffield (3.3.9) with the following substitutions
+    # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
+    # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
+
+    # Electron susceptibilities
+    chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
+    for i in range(len(efract)):
+        chiE[i, :] = chi(
+            f=efn[i],
+            u_axis=(
+                e_velocity_axes[i] - np.sum(np.abs(electron_vel[i]) ** 2) ** (1 / 2)
+            )
+            / (np.sqrt(2) * vTe[i]),
+            k=k,
+            xi=xie[i],
+            v_th=vTe[i],
+            n=ne[i],
+            particle_m=5.4858e-4,
+            particle_q=-1,
+            inner_range=inner_range,
+            inner_frac=inner_frac,
+        )
+
+    # Ion susceptibilities
+    chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
+    for i in range(len(ifract)):
+        chiI[i, :] = chi(
+            f=ifn[i],
+            u_axis=(i_velocity_axes[i] - np.sum(np.abs(ion_vel[i]) ** 2) ** (1 / 2))
+            / (np.sqrt(2) * vTi[i]),
+            k=k,
+            xi=xii[i],
+            v_th=vTi[i],
+            n=ni[i],
+            particle_m=ion_mass[i],
+            particle_q=ion_z[i],
+            inner_range=inner_range,
+            inner_frac=inner_frac,
+        )
+
+    # Calculate the longitudinal dielectric function
+    epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
+
+    # Electron component of Skw from Sheffield 5.1.2
+    econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
+    for m in range(efract.size):
+        econtr[m] = efract[m] * (
+            2
+            * np.pi
+            / k
+            * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
+            * np.interp(
+                xie[m],
+                (e_velocity_axes[m] - np.sum(np.abs(electron_vel[m]) ** 2) ** (1 / 2))
+                / (np.sqrt(2) * vTe[m]),
+                efn[m],
+            )
+        )
+
+    # ion component
+    icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
+    for m in range(ifract.size):
+        icontr[m] = ifract[m] * (
+            2
+            * np.pi
+            * ion_z[m]
+            / k
+            * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
+            * np.interp(
+                xii[m],
+                (i_velocity_axes[m] - np.sum(np.abs(ion_vel[m]) ** 2) ** (1 / 2))
+                / (np.sqrt(2) * vTi[m]),
+                ifn[m],
+            )
+        )
+
+    # Recast as real: imaginary part is already zero
+    Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))
+
+    # Convert to power spectrum if option is enabled
+    if scattered_power:
+        # Conversion factor
+        Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2) 
+        #this is to convert from S(frequency) to S(wavelength), there is an 
+        #extra 2 * pi * c here but that should be removed by normalization
+        
+    
+    #Account for notch(es)
+    for myNotch in notches:
+        if len(myNotch) != 2:
+            raise ValueError("Notches must be pairs of values")
+            
+        x0 = np.argmin(np.abs(wavelengths - myNotch[0]))
+        x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
+        Skw[x0:x1] = 0
+        
+
+    # Normalize result to have integral 1
+    Skw = Skw / np.trapz(Skw, wavelengths)
+
+    return np.mean(alpha), Skw
+    
+
+
 def spectral_density_arbdist(
     wavelengths: u.nm,
     probe_wavelength: u.nm,
@@ -252,92 +460,13 @@ def spectral_density_arbdist(
     efract: np.ndarray = None,
     ifract: np.ndarray = None,
     ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
-    color="r",
     probe_vec=np.array([1, 0, 0]),
     scatter_vec=np.array([0, 1, 0]),
     scattered_power=False,
     inner_range=0.1,
     inner_frac=0.8,
 ) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
-    r"""
-    Calculate the spectral density function for Thomson scattering of a
-    probe laser beam by a multi-species Maxwellian plasma.
-    This function calculates the spectral density function for Thomson
-    scattering of a probe laser beam by a plasma consisting of one or more ion
-    species and a one or more thermal electron populations (the entire plasma
-    is assumed to be quasi-neutral)
-    .. math::
-        S(k,\omega) = \sum_e \frac{2\pi}{k}
-        \bigg |1 - \frac{\chi_e}{\epsilon} \bigg |^2
-        f_{e0,e} \bigg (\frac{\omega}{k} \bigg ) +
-        \sum_i \frac{2\pi Z_i}{k}
-        \bigg |\frac{\chi_e}{\epsilon} \bigg |^2 f_{i0,i}
-        \bigg ( \frac{\omega}{k} \bigg )
-    where :math:`\chi_e` is the electron component susceptibility of the
-    plasma and :math:`\epsilon = 1 + \sum_e \chi_e + \sum_i \chi_i` is the total
-    plasma dielectric  function (with :math:`\chi_i` being the ion component
-    of the susceptibility), :math:`Z_i` is the charge of each ion, :math:`k`
-    is the scattering wavenumber, :math:`\omega` is the scattering frequency,
-    and :math:`f_{e0,e}` and :math:`f_{i0,i}` are the electron and ion velocity
-    distribution functions respectively. In this function the electron and ion
-    velocity distribution functions are assumed to be Maxwellian, making this
-    function equivalent to Eq. 3.4.6 in `Sheffield`_.
-    Parameters
-    ----------
-    wavelengths : `~astropy.units.Quantity`
-        Array of wavelengths over which the spectral density function
-        will be calculated. (convertible to nm)
-    probe_wavelength : `~astropy.units.Quantity`
-        Wavelength of the probe laser. (convertible to nm)
-    n : `~astropy.units.Quantity`
-        Mean (0th order) density of all plasma components combined.
-        (convertible to cm^-3.)
-    velocity_bins: `~astropy.units.Quantity`, shape (N, )
-        Arrays of velocity axis bins corresponding to each frequency array. (convertible to m/s)
-    fn_arrays: `~astropy.units.Quantity`, shape (N, )
-        Frequency arrays for each ion species; each index should be of the same shape as corresponding velocity_bins index.
-    efract : array_like, shape (Ne, ), optional
-        An array-like object where each element represents the fraction (or ratio)
-        of the electron component number density to the total electron number density.
-        Must sum to 1.0. Default is a single electron component.
-    ifract : array_like, shape (Ni, ), optional
-        An array-like object where each element represents the fraction (or ratio)
-        of the ion component number density to the total ion number density.
-        Must sum to 1.0. Default is a single ion species.
-    ion_species : str or `~plasmapy.particles.Particle`, shape (N, ), optional
-        A list or single instance of `~plasmapy.particles.Particle`, or strings
-        convertible to `~plasmapy.particles.Particle`. Default is `'H+'`
-        corresponding to a single species of hydrogen ions.
-    probe_vec : float `~numpy.ndarray`, shape (3, )
-        Unit vector in the direction of the probe laser. Defaults to
-        [1, 0, 0].
-    scatter_vec : float `~numpy.ndarray`, shape (3, )
-        Unit vector pointing from the scattering volume to the detector.
-        Defaults to [0, 1, 0] which, along with the default `probe_vec`,
-        corresponds to a 90 degree scattering angle geometry.
-    scattered_power: boolean
-        If False, function will return the normal spectral density for arbitrary distribution.
-        If True, output will be multiplied by the relevant factor (to first order in velocity) to convert spectral density to the scattered power.
-    Returns
-    -------
-    alpha : float
-        Mean scattering parameter, where `alpha` > 1 corresponds to collective
-        scattering and `alpha` < 1 indicates non-collective scattering. The
-        scattering parameter is calculated based on the total plasma density n.
-    Skw : `~astropy.units.Quantity`
-        Computed spectral density function over the input `wavelengths` array
-        with units of s/rad.
-    Notes
-    -----
-    For details, see "Plasma Scattering of Electromagnetic Radiation" by
-    Sheffield et al. `ISBN 978\\-0123748775`_. This code is a modified version
-    of the program described therein.
-    For a concise summary of the relevant physics, see Chapter 5 of Derek
-    Schaeffer's thesis, DOI: `10.5281/zenodo.3766933`_.
-    .. _`ISBN 978\\-0123748775`: https://www.sciencedirect.com/book/9780123748775/plasma-scattering-of-electromagnetic-radiation
-    .. _`10.5281/zenodo.3766933`: https://doi.org/10.5281/zenodo.3766933
-    .. _`Sheffield`: https://doi.org/10.1016/B978-0-12-374877-5.00003-8
-    """
+    
     if efract is None:
         efract = np.ones(1)
     else:
@@ -361,6 +490,39 @@ def spectral_density_arbdist(
     efn = efn.to(u.s / u.m).value
     ifn = ifn.to(u.s / u.m).value
     n = n.to(u.m ** -3).value
+    
+    
+    # Create arrays of ion Z and mass from particles given
+    ion_z = np.zeros(len(ion_species))
+    ion_mass = np.zeros(len(ion_species)) * u.kg
+    for i, particle in enumerate(ion_species):
+        ion_z[i] = particle.charge_number
+        ion_mass[i] = particle_mass(particle)
+        
+    
+    probe_vec = probe_vec / np.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
+    
+    
+    return fast_spectral_density_arbdist(
+        wavelengths, 
+        probe_wavelength, 
+        e_velocity_axes, 
+        i_velocity_axes, 
+        efn, 
+        ifn,
+        n,
+        notches,
+        efract,
+        ifract,
+        ion_z,
+        ion_mass,
+        probe_vec,
+        scatter_vec,
+        scattered_power,
+        inner_range,
+        inner_frac
+        )
     
     
     # Condition ion_species

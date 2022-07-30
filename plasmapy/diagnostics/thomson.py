@@ -1225,7 +1225,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     settings.pop("imodel")
 
     # Call scattered power function
-    alpha, model_Pw = spectral_density_arbdist(
+    alpha, model_Pw = fast_spectral_density_arbdist(
         wavelengths=wavelengths,
         n=n * u.cm ** -3,
         efn=fe,
@@ -1235,6 +1235,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     )
 
     # Put settings back now
+    # this is necessary to avoid changing the settings array globally
     settings["emodel"] = emodel
     settings["imodel"] = imodel
 

@@ -1192,25 +1192,37 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     eparams: parameters to put into emodel to generate a VDF
     iparams: parameters to put into imodel to generate a VDF
     """
-
+    
+    
+    # check number of ion species
+    
+    if "ion_species" in settings:
+        nSpecies = len(settings["ion_species"])
+    else:
+        nSpecies = 1
+    
     # Separate params into electron params and ion params
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
     # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
     # The electron density n is just passed in as "n" and is treated separately from the other params
     # Velocity array is passed into settings
     eparams = {}
-    iparams = {}
+    iparams = [{}] * nSpecies
 
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
     imodel = settings["imodel"]
 
     for myParam in params.keys():
-        if myParam[0:2] == "e_":
-            eparams[myParam[2:]] = params[myParam]
-        elif myParam[0:2] == "i_":
-            iparams[myParam[2:]] = params[myParam]
-        elif myParam == "n":
+        
+        myParam_split = myParam.split("_")
+        
+        if myParam_split[0] == "e":
+            eparams[myParam_split[1]] = params[myParam]
+        elif myParam_split[0][0] == "i":
+            if myParam_split[0][1:].isnumeric():
+                iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
+        elif myParam_split[0] == "n":
             n = params[myParam]
 
     # Create VDFs from model functions
@@ -1218,7 +1230,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     vi = settings["i_velocity_axes"]
 
     fe = emodel(ve, **eparams)
-    fi = imodel(vi, **iparams)
+    fi = [None] * nSpecies
+    for i in range(nSpecies):
+        fi[i] = imodel[i](vi[i], **(iparams[i]))
 
     # Remove emodel, imodel temporarily to put settings into the scattered power
     settings.pop("emodel")
@@ -1316,7 +1330,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     # The electron density n is just passed in as "n" and is treated separately from the other params
     # Velocity array is passed into settings
     eparams = {}
-    iparams = {}
+    iparams = []
 
     # Extract crucial settings of emodel, imodel first
 
@@ -1329,7 +1343,11 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         imodel = settings["imodel"]
     else:
         raise ValueError("Missing ion VDF model in settings")
-
+    
+    if "ion_species" in settings:
+        
+    
+    
     for myParam in params.keys():
         if myParam[0:2] == "e_":
             eparams[myParam[2:]] = params[myParam]
@@ -1341,6 +1359,8 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
             raise ValueError("Param name invalid, must start with e_ or i_")
 
     # Check that models have correct params as inputs
+    
+    
 
     # Param names from the model functions
     emodel_param_names = set(inspect.getfullargspec(emodel)[0])
@@ -1366,7 +1386,17 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
 
     if imodel_param_names != iparam_names:
         raise ValueError("Ion parameters do not match")
-
+        
+    # Create arrays of ion Z and mass from particles given
+    ion_z = np.zeros(num_i)
+    ion_mass = np.zeros(num_i) * u.kg
+    for i, species in enumerate(settings["ion_species"]):
+        particle = Particle(species)
+        ion_z[i] = particle.charge_number
+        ion_mass[i] = particle_mass(particle)
+    settings["ion_z"] = ion_z
+    settings["ion_mass"] = ion_mass.to(u.kg).value
+    
     # Add special settings to the dict
 
     model = Model(
@@ -1478,7 +1508,7 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
             if k not in list(params.keys()):
                 raise KeyError(f"{p} was not provided in parameters, but is required.")
 
-    # Create arrays of ion Z and mu from particles given
+
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(num_i)
     ion_mass = np.zeros(num_i) * u.kg

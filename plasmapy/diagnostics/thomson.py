@@ -1221,18 +1221,20 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
             raise ValueError("Ion species " + str(i) + " parameters do not match")
 
     
-        
+    ion_species = settings["ion_species"]
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(nSpecies)
     ion_m = np.zeros(nSpecies)
-    for i, species in enumerate(settings["ion_species"]):
+    for i, species in enumerate(ion_species):
         particle = Particle(species)
         ion_z[i] = particle.charge_number
         ion_m[i] = particle.mass_number
     settings["ion_z"] = ion_z
     settings["ion_m"] = ion_m
     
-    # Add special settings to the dict
+    # Remove the ion_species from settings
+    
+    settings.pop("ion_species")
 
     model = Model(
         _scattered_power_model_arbdist,
@@ -1240,6 +1242,8 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         nan_policy="omit",
         settings=settings,
     )
+    
+    settings["ion_species"] = ion_species
 
     return model
 

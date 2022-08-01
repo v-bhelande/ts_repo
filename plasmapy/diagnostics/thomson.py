@@ -1012,7 +1012,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # The electron density n is just passed in as "n" and is treated separately from the other params
     # Velocity array is passed into settings
     eparams = {}
-    iparams = [{}] * nSpecies
+    iparams = [{} for _ in range(nSpecies)]
 
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
@@ -1171,7 +1171,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     # The electron density n is just passed in as "n" and is treated separately from the other params
     # Velocity array is passed into settings
     eparams = {}
-    iparams = [{}] * nSpecies
+    iparams = [{} for _ in range(nSpecies)]
         
     
     

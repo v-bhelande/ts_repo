@@ -1224,7 +1224,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(nSpecies)
-    ion_m = np.zeros(nSpecies) * u.kg
+    ion_m = np.zeros(nSpecies)
     for i, species in enumerate(settings["ion_species"]):
         particle = Particle(species)
         ion_z[i] = particle.charge_number

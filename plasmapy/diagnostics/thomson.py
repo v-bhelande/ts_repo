@@ -1189,9 +1189,6 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         else:
             raise ValueError("Param name " + myParam + " invalid, must start with e or i")
         
-    
-    print("Ion parameters:")
-    print(iparams)
     # Check that models have correct params as inputs
     
     
@@ -1217,6 +1214,8 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         
         imodel_param_names.remove("v")
         iparam_names = set(iparams[i].keys())
+        
+        print(iparam_names)
         
         if imodel_param_names != iparam_names:
             raise ValueError("Ion species " + str(i) + " parameters do not match")

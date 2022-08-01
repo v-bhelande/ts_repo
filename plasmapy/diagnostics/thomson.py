@@ -1157,6 +1157,16 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
 
     if "ifract_0" not in list(params.keys()):
         params.add("ifract_0", value=1.0, vary=False)
+        
+    
+    num_i = _count_populations_in_params(params, "ifract")
+    
+    if num_i > 1:
+        nums = ["ifract_" + str(i) for i in range(num_i - 1)]
+        nums.insert(0, "1.0")
+        params["ifract_" + str(num_i - 1)].expr = " - ".join(nums)
+    
+    
     
     # Separate params into electron params and ion params
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel

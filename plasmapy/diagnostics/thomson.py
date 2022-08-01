@@ -1216,7 +1216,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         iparam_names = set(iparams[i].keys())
         
         if imodel_param_names != iparam_names:
-            raise ValueError("Ion parameters do not match")
+            raise ValueError("Ion species " + str(i) + " parameters do not match")
 
     
         

@@ -1017,16 +1017,18 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
     imodel = settings["imodel"]
+    
+    ifract = _params_to_array(params, "ifract")
 
     for myParam in params.keys():
         
         myParam_split = myParam.split("_")
         
         if myParam_split[0] == "e":
-            eparams[myParam_split[1]] = params[myParam]
-        elif myParam_split[0][0] == "i":
-            if myParam_split[0][1:].isnumeric():
-                iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
+            eparams[myParam_split[1]] = params[myParam]        
+        elif myParam_split[0] == "i":
+            if myParam_split[1].isnumeric():
+                iparams[int(myParam_split[1])][myParam_split[2]] = params[myParam]
         elif myParam_split[0] == "n":
             n = params[myParam]
 
@@ -1050,6 +1052,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         efn=fe,
         ifn=fi,
         scattered_power=True,
+        ifract = ifract,
         **settings,
     )
 
@@ -1148,6 +1151,12 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     else:
         settings["ion species"] = ["p"]
         nSpecies = 1
+    
+    if "efract_0" not in list(params.keys()):
+        params.add("efract_0", value=1.0, vary=False)
+
+    if "ifract_0" not in list(params.keys()):
+        params.add("ifract_0", value=1.0, vary=False)
     
     # Separate params into electron params and ion params
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel

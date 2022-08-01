@@ -1151,9 +1151,6 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     else:
         settings["ion species"] = ["p"]
         nSpecies = 1
-    
-    if "efract_0" not in list(params.keys()):
-        params.add("efract_0", value=1.0, vary=False)
 
     if "ifract_0" not in list(params.keys()):
         params.add("ifract_0", value=1.0, vary=False)

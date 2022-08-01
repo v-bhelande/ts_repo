@@ -1240,7 +1240,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         _scattered_power_model_arbdist,
         independent_vars=["wavelengths"],
         nan_policy="omit",
-        settings=settings,
+        settings=settings.copy(),
     )
     
     settings["ion_species"] = ion_species

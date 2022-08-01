@@ -1036,7 +1036,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     ve = settings["e_velocity_axes"]
     vi = settings["i_velocity_axes"]
 
-    fe = emodel(ve, **eparams)
+    fe = emodel(ve[0], **eparams)
     fi = [None] * nSpecies
     for i in range(nSpecies):
         fi[i] = imodel[i](vi[i], **(iparams[i]))

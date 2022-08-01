@@ -1324,13 +1324,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     User facing fitting function, calls _scattered_power_model_arbdist to obtain lmfit model
     """
 
-    # Separate params into electron params and ion params
-    # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
-    # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
-    # The electron density n is just passed in as "n" and is treated separately from the other params
-    # Velocity array is passed into settings
-    eparams = {}
-    iparams = []
+    
 
     # Extract crucial settings of emodel, imodel first
 
@@ -1345,18 +1339,34 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         raise ValueError("Missing ion VDF model in settings")
     
     if "ion_species" in settings:
+        nSpecies = len(settings["ion_species"])
+    else:
+        settings["ion species"] = ["p"]
+        nSpecies = 1
+    
+    # Separate params into electron params and ion params
+    # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
+    # Ion params must take the form i_paramName, where paramName is the name of the param in imodel
+    # The electron density n is just passed in as "n" and is treated separately from the other params
+    # Velocity array is passed into settings
+    eparams = {}
+    iparams = [{}] * nSpecies
         
     
     
     for myParam in params.keys():
-        if myParam[0:2] == "e_":
-            eparams[myParam[2:]] = params[myParam]
-        elif myParam[0:2] == "i_":
-            iparams[myParam[2:]] = params[myParam]
-        elif myParam == "n":
+        
+        myParam_split = myParam.split("_")
+        
+        if myParam_split[0] == "e":
+            eparams[myParam_split[1]] = params[myParam]
+        elif myParam_split[0][0] == "i":
+            if myParam_split[0][1:].isnumeric():
+                iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
+        elif myParam_split[0] == "n":
             n = params[myParam]
         else:
-            raise ValueError("Param name invalid, must start with e_ or i_")
+            raise ValueError("Param name " + myParam + " invalid, must start with e or i")
 
     # Check that models have correct params as inputs
     
@@ -1364,32 +1374,34 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
 
     # Param names from the model functions
     emodel_param_names = set(inspect.getfullargspec(emodel)[0])
-    imodel_param_names = set(inspect.getfullargspec(imodel)[0])
 
     # Check if models take in velocity as an input -- this is ignored as a param
     if not ("v" in emodel_param_names):
         raise ValueError("Electron VDF model does not take velocity as input")
-
-    if not ("v" in imodel_param_names):
-        raise ValueError("Ion VDF model does not take velocity as input")
-
+    
     emodel_param_names.remove("v")
-    imodel_param_names.remove("v")
-
-    # Input param names
     eparam_names = set(eparams.keys())
-    iparam_names = set(iparams.keys())
-
     # Raise errors if params are wrong
     if emodel_param_names != eparam_names:
         raise ValueError("Electron parameters do not match")
+    
+      
+    for i in range(nSpecies):
+        imodel_param_names = set(inspect.getfullargspec(imodel[i])[0])
+        if not ("v" in imodel_param_names):
+            raise ValueError("Ion VDF model does not take velocity as input")
+        
+        imodel_param_names.remove("v")
+        iparam_names = set(iparams[i].keys())
+        
+        if imodel_param_names != iparam_names:
+            raise ValueError("Ion parameters do not match")
 
-    if imodel_param_names != iparam_names:
-        raise ValueError("Ion parameters do not match")
+    
         
     # Create arrays of ion Z and mass from particles given
-    ion_z = np.zeros(num_i)
-    ion_mass = np.zeros(num_i) * u.kg
+    ion_z = np.zeros(nSpecies)
+    ion_mass = np.zeros(nSpecies) * u.kg
     for i, species in enumerate(settings["ion_species"]):
         particle = Particle(species)
         ion_z[i] = particle.charge_number

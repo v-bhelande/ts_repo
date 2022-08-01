@@ -1026,9 +1026,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         
         if myParam_split[0] == "e":
             eparams[myParam_split[1]] = params[myParam]        
-        elif myParam_split[0] == "i":
-            if myParam_split[1].isnumeric():
-                iparams[int(myParam_split[1])][myParam_split[2]] = params[myParam]
+        elif myParam_split[0][0] == "i":
+            if myParam_split[0][1:].isnumeric():
+                iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
         elif myParam_split[0] == "n":
             n = params[myParam]
 

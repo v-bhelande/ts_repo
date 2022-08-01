@@ -1001,7 +1001,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     
     # check number of ion species
     
-    if "ion_species" in settings:
+    if "ion_m" in settings:
         nSpecies = len(settings["ion_m"])
     else:
         nSpecies = 1

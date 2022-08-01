@@ -1048,7 +1048,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Call scattered power function
     alpha, model_Pw = fast_spectral_density_arbdist(
         wavelengths=wavelengths,
-        n=n * u.cm ** -3,
+        n=n * 1e-6, #this is so it accepts cm^-3 values by default
         efn=fe,
         ifn=fi,
         scattered_power=True,

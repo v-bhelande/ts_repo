@@ -252,7 +252,7 @@ def fast_spectral_density_arbdist(
     efract: np.ndarray = None,
     ifract: np.ndarray = None,
     ion_z=np.array([1]),
-    ion_mass=np.array([1]),
+    ion_m=np.array([1]),
     probe_vec=np.array([1, 0, 0]),
     scatter_vec=np.array([0, 1, 0]),
     scattered_power=False,
@@ -378,7 +378,7 @@ def fast_spectral_density_arbdist(
             xi=xii[i],
             v_th=vTi[i],
             n=ni[i],
-            particle_m=ion_mass[i],
+            particle_m=ion_m[i],
             particle_q=ion_z[i],
             inner_range=inner_range,
             inner_frac=inner_frac,
@@ -504,10 +504,10 @@ def spectral_density_arbdist(
     
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(len(ion_species))
-    ion_mass = np.zeros(len(ion_species)) * u.kg
+    ion_m = np.zeros(len(ion_species))
     for i, particle in enumerate(ion_species):
         ion_z[i] = particle.charge_number
-        ion_mass[i] = particle_mass(particle)
+        ion_m[i] = ion_species[i].mass_number
         
     
     probe_vec = probe_vec / np.linalg.norm(probe_vec)
@@ -526,7 +526,7 @@ def spectral_density_arbdist(
         efract,
         ifract,
         ion_z,
-        ion_mass,
+        ion_m,
         probe_vec,
         scatter_vec,
         scattered_power,
@@ -1206,13 +1206,13 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(nSpecies)
-    ion_mass = np.zeros(nSpecies) * u.kg
+    ion_m = np.zeros(nSpecies) * u.kg
     for i, species in enumerate(settings["ion_species"]):
         particle = Particle(species)
         ion_z[i] = particle.charge_number
-        ion_mass[i] = particle_mass(particle)
+        ion_m[i] = particle.mass_number
     settings["ion_z"] = ion_z
-    settings["ion_mass"] = ion_mass.to(u.kg).value
+    settings["ion_m"] = ion_m
     
     # Add special settings to the dict
 
@@ -1328,13 +1328,13 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
 
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(num_i)
-    ion_mass = np.zeros(num_i) * u.kg
+    ion_m= np.zeros(num_i)
     for i, species in enumerate(settings["ion_species"]):
         particle = Particle(species)
         ion_z[i] = particle.charge_number
-        ion_mass[i] = particle_mass(particle)
+        ion_m[i] = particle.mass_number
     settings["ion_z"] = ion_z
-    settings["ion_mass"] = ion_mass.to(u.kg).value
+    settings["ion_m"] = ion_m
 
     # Automatically add an expression to the last efract parameter to
     # indicate that it depends on the others (so they sum to 1.0)

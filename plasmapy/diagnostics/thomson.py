@@ -580,7 +580,7 @@ def fast_spectral_density_maxwellian(
     # Calculate plasma parameters
     # Temperatures here in K!
     vTe = fast_thermal_speed(Te, _m_e)
-    vTi = fast_thermal_speed(Ti, ion_mass)
+    vTi = fast_thermal_speed(Ti, ion_m * _m_p)
     zbar = np.sum(ifract * ion_z)
 
     # Compute electron and ion densities
@@ -634,7 +634,7 @@ def fast_spectral_density_maxwellian(
     # Sheffield Sec. 5.1
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(ifract):
-        wpi = fast_plasma_frequency(ni[i], ion_z[i], ion_mass[i])
+        wpi = fast_plasma_frequency(ni[i], ion_z[i], ion_m[i] * _m_p)
         chiI[i, :] = fast_permittivity_1D_Maxwellian(w_i[i, :], k, vTi[i], wpi)
 
     # Calculate the longitudinal dielectric function
@@ -899,10 +899,10 @@ def spectral_density_maxwellian(
 
     # Create arrays of ion Z and mass from particles given
     ion_z = np.zeros(len(ion_species))
-    ion_mass = np.zeros(len(ion_species)) * u.kg
+    ion_m = np.zeros(len(ion_species))
     for i, particle in enumerate(ion_species):
         ion_z[i] = particle.charge_number
-        ion_mass[i] = particle_mass(particle)
+        ion_m[i] = particle.mass_number
 
     probe_vec = probe_vec / np.linalg.norm(probe_vec)
     scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
@@ -928,7 +928,7 @@ def spectral_density_maxwellian(
         efract=efract,
         ifract=ifract,
         ion_z=ion_z,
-        ion_mass=ion_mass.to(u.kg).value,
+        ion_m = ion_m,
         ion_vel=ion_vel.to(u.m / u.s).value,
         electron_vel=electron_vel.to(u.m / u.s).value,
         probe_vec=probe_vec,

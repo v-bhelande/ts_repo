@@ -548,7 +548,7 @@ def fast_spectral_density_maxwellian(
     efract: np.ndarray = np.array([1.0]),
     ifract: np.ndarray = np.array([1.0]),
     ion_z=np.array([1]),
-    ion_mass=np.array([1]),
+    ion_m=np.array([1]),
     ion_vel=None,
     electron_vel=None,
     probe_vec=np.array([1, 0, 0]),
@@ -1077,7 +1077,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     # LOAD FROM SETTINGS
     notches = settings["notches"]
     ion_z = settings["ion_z"]
-    ion_mass = settings["ion_mass"]
+    ion_m = settings["ion_m"]
     probe_vec = settings["probe_vec"]
     scatter_vec = settings["scatter_vec"]
     electron_vdir = settings["electron_vdir"]
@@ -1115,7 +1115,7 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         efract=efract,
         ifract=ifract,
         ion_z=ion_z,
-        ion_mass=ion_mass,
+        ion_m=ion_m,
         electron_vel=electron_vel,
         ion_vel=ion_vel,
         probe_vec=probe_vec,
@@ -1355,8 +1355,10 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
         particle = Particle(species)
         ion_z[i] = particle.charge_number
         ion_m[i] = particle.mass_number
+        ion_mass = 
     settings["ion_z"] = ion_z
     settings["ion_m"] = ion_m
+    
 
     # Automatically add an expression to the last efract parameter to
     # indicate that it depends on the others (so they sum to 1.0)

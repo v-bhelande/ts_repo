@@ -1355,7 +1355,6 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
         particle = Particle(species)
         ion_z[i] = particle.charge_number
         ion_m[i] = particle.mass_number
-        ion_mass = 
     settings["ion_z"] = ion_z
     settings["ion_m"] = ion_m
     

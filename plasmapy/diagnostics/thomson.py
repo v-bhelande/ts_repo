@@ -135,7 +135,7 @@ def derivative(f, x, order):
 # Note xi is scaled by 1/sqrt2 from the versions defined above
 # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-# @jit(nopython=True)
+@jit(nopython=True)
 def chi(
     f,
     u_axis,

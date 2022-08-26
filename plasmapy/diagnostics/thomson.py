@@ -128,13 +128,6 @@ def derivative(f, x, order):
 
     return fPrime
 
-
-# A function for computing susceptibility constants
-# Apply Sheffield (3.3.9) with the following substitutions
-# xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
-# Note xi is scaled by 1/sqrt2 from the versions defined above
-# Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
-
 @jit(nopython=True)
 def chi(
     f,
@@ -177,7 +170,6 @@ def chi(
     """
     #the fractional range of the inner fine divisions near the asymptote
     inner_range = 0.1
-
     #the fraction of total divisions used in the inner range; should be > inner_range
     inner_frac = 0.8"""
 
@@ -238,6 +230,10 @@ def chi(
     coefficient = -wpl2 / k ** 2 / (np.sqrt(2) * v_th)
 
     return coefficient * integral
+        
+        
+    
+    
 
 
 def fast_spectral_density_arbdist(
@@ -363,8 +359,6 @@ def fast_spectral_density_arbdist(
             n=ne[i],
             particle_m=5.4858e-4,
             particle_q=-1,
-            inner_range=inner_range,
-            inner_frac=inner_frac,
         )
 
     # Ion susceptibilities
@@ -380,8 +374,6 @@ def fast_spectral_density_arbdist(
             n=ni[i],
             particle_m=ion_m[i],
             particle_q=ion_z[i],
-            inner_range=inner_range,
-            inner_frac=inner_frac,
         )
 
     # Calculate the longitudinal dielectric function
@@ -946,16 +938,28 @@ def spectral_density_maxwellian(
 # ***************************************************************************
 
 
-def _count_populations_in_params(params, prefix):
+def _count_populations_in_params(params, prefix, allow_empty = False):
     """
     Counts the number of entries matching the pattern prefix_i in a
     list of keys
     """
+    
     keys = list(params.keys())
-    return len(re.findall(prefix, ",".join(keys)))
+    prefixLength = len(prefix)
+    
+    if allow_empty:
+        nParams = 0
+        for myKey in keys:
+            if myKey[:prefixLength] == prefix:
+                nParams = max(nParams, int(myKey[prefixLength + 1:]) + 1)
+        
+        return nParams
+    
+    else:
+        return len(re.findall(prefix, ",".join(keys)))
 
 
-def _params_to_array(params, prefix, vector=False):
+def _params_to_array(params, prefix, vector=False, allow_empty = False):
     """
     Takes a list of parameters and returns an array of the values corresponding
     to a key, based on the following naming convention:
@@ -969,17 +973,21 @@ def _params_to_array(params, prefix, vector=False):
     """
 
     if vector:
-        npop = _count_populations_in_params(params, prefix + "_x")
+        npop = _count_populations_in_params(params, prefix + "_x", allow_empty = allow_empty)
         output = np.zeros([npop, 3])
         for i in range(npop):
             for j, ax in enumerate(["x", "y", "z"]):
-                output[i, j] = params[prefix + f"_{ax}_{i}"].value
+                if (prefix + f"_{ax}_{i}") in params:
+                    output[i, j] = params[prefix + f"_{ax}_{i}"].value
+                else:
+                    output[i, j] = None
 
     else:
-        npop = _count_populations_in_params(params, prefix)
+        npop = _count_populations_in_params(params, prefix, allow_empty = allow_empty)
         output = np.zeros([npop])
         for i in range(npop):
-            output[i] = params[prefix + f"_{i}"]
+            if prefix + f"_{i}" in params:
+                output[i] = params[prefix + f"_{i}"]
 
     return output
 
@@ -1019,7 +1027,16 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     imodel = settings["imodel"]
     
     ifract = _params_to_array(params, "ifract")
-
+    
+    
+    #ion charges follow params if given, otherwise they are fixed at default values
+    ion_z = np.zeros(nSpecies)
+    for i in range(nSpecies):
+        if "q_" + str(i) in params:
+            ion_z[i] = params["q_" + str(i)]
+        else:
+            ion_z[i] = settings["ion_z"][i]
+    
     for myParam in params.keys():
         
         myParam_split = myParam.split("_")
@@ -1031,7 +1048,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
                 iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
         elif myParam_split[0] == "n":
             n = params[myParam]
-
+        
     # Create VDFs from model functions
     ve = settings["e_velocity_axes"]
     vi = settings["i_velocity_axes"]
@@ -1044,6 +1061,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Remove emodel, imodel temporarily to put settings into the scattered power
     settings.pop("emodel")
     settings.pop("imodel")
+    settings.pop("ion_z")
 
     # Call scattered power function
     alpha, model_Pw = fast_spectral_density_arbdist(
@@ -1053,6 +1071,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         ifn=fi,
         scattered_power=True,
         ifract = ifract,
+        ion_z = ion_z,
         **settings,
     )
 
@@ -1060,6 +1079,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # this is necessary to avoid changing the settings array globally
     settings["emodel"] = emodel
     settings["imodel"] = imodel
+    settings["ion_z"] = ion_z 
 
     return model_Pw
 
@@ -1162,6 +1182,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         nums = ["ifract_" + str(i) for i in range(num_i - 1)]
         nums.insert(0, "1.0")
         params["ifract_" + str(num_i - 1)].expr = " - ".join(nums)
+        
     
     
     
@@ -1186,6 +1207,8 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
                 iparams[int(myParam_split[0][1:])][myParam_split[1]] = params[myParam]
         elif myParam_split[0] == "n":
             n = params[myParam]
+        elif myParam_split[0] == "z":
+            z = params[myParam] #this line does nothing and is just to not have the next else trigger
         else:
             raise ValueError("Param name " + myParam + " invalid, must start with e or i")
         

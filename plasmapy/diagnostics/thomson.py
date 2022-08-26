@@ -359,6 +359,8 @@ def fast_spectral_density_arbdist(
             n=ne[i],
             particle_m=5.4858e-4,
             particle_q=-1,
+            inner_range = inner_range,
+            inner_frac = inner_frac
         )
 
     # Ion susceptibilities
@@ -374,6 +376,8 @@ def fast_spectral_density_arbdist(
             n=ni[i],
             particle_m=ion_m[i],
             particle_q=ion_z[i],
+            inner_range = inner_range,
+            inner_frac = inner_frac
         )
 
     # Calculate the longitudinal dielectric function

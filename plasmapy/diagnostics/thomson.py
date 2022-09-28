@@ -1023,6 +1023,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         nSpecies = len(settings["ion_m"])
     else:
         nSpecies = 1
+        
+    if "ifract_0" not in list(params.keys()):
+        params.add("ifract_0", value=1.0, vary=False)
     
     # Separate params into electron params and ion params
     # Electron params must take the form e_paramName, where paramName is the name of the param in emodel
@@ -1035,6 +1038,8 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
     imodel = settings["imodel"]
+    
+    ifract = _params_to_array(params, "ifract")
     
     
     #ion charges follow params if given, otherwise they are fixed at default values

@@ -267,6 +267,7 @@ def fast_spectral_density_arbdist(
 
     # Compute drift velocities and thermal speeds for all electrons and ion species
     electron_vel = []  # drift velocities (vector)
+    electron_vel_1d = [] # 1D drift velocities (scalar)
     vTe = []  # thermal speeds (scalar)
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
@@ -276,12 +277,15 @@ def fast_spectral_density_arbdist(
         bulk_velocity = np.trapz(moment1_integrand, v_axis)
         moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
         electron_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
+        electron_vel_1d.append(bulk_velocity)
         vTe.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
 
     electron_vel = np.array(electron_vel)
+    electron_vel_1d = np.array(electron_vel_1d)
     vTe = np.array(vTe)
 
     ion_vel = []
+    ion_vel_1d = []
     vTi = []
     for i, fn in enumerate(ifn):
         v_axis = i_velocity_axes[i]
@@ -289,9 +293,11 @@ def fast_spectral_density_arbdist(
         bulk_velocity = np.trapz(moment1_integrand, v_axis)
         moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
         ion_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
+        ion_vel_1d.append(bulk_velocity)
         vTi.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
 
     ion_vel = np.array(ion_vel)
+    ion_vel_1d = np.array(ion_vel_1d)
     vTi = np.array(vTi)
 
     # Define some constants
@@ -350,7 +356,7 @@ def fast_spectral_density_arbdist(
         chiE[i, :] = chi(
             f=efn[i],
             u_axis=(
-                e_velocity_axes[i] - np.sum(np.abs(electron_vel[i]) ** 2) ** (1 / 2)
+                e_velocity_axes[i] - electron_vel_1d[i]
             )
             / (np.sqrt(2) * vTe[i]),
             k=k,
@@ -368,7 +374,7 @@ def fast_spectral_density_arbdist(
     for i in range(len(ifract)):
         chiI[i, :] = chi(
             f=ifn[i],
-            u_axis=(i_velocity_axes[i] - np.sum(np.abs(ion_vel[i]) ** 2) ** (1 / 2))
+            u_axis=(i_velocity_axes[i] - ion_vel_1d[i]
             / (np.sqrt(2) * vTi[i]),
             k=k,
             xi=xii[i],
@@ -393,7 +399,7 @@ def fast_spectral_density_arbdist(
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
             * np.interp(
                 xie[m],
-                (e_velocity_axes[m] - np.sum(np.abs(electron_vel[m]) ** 2) ** (1 / 2))
+                (e_velocity_axes[m] - electron_vel_1d[i]
                 / (np.sqrt(2) * vTe[m]),
                 efn[m],
             )
@@ -410,7 +416,7 @@ def fast_spectral_density_arbdist(
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
             * np.interp(
                 xii[m],
-                (i_velocity_axes[m] - np.sum(np.abs(ion_vel[m]) ** 2) ** (1 / 2))
+                (i_velocity_axes[m] - ion_vel_1d[i]
                 / (np.sqrt(2) * vTi[m]),
                 ifn[m],
             )
@@ -1030,8 +1036,6 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     emodel = settings["emodel"]
     imodel = settings["imodel"]
     
-    ifract = _params_to_array(params, "ifract")
-    
     
     #ion charges follow params if given, otherwise they are fixed at default values
     ion_z = np.zeros(nSpecies)
@@ -1175,9 +1179,6 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
     else:
         settings["ion species"] = ["p"]
         nSpecies = 1
-
-    if "ifract_0" not in list(params.keys()):
-        params.add("ifract_0", value=1.0, vary=False)
         
     
     num_i = _count_populations_in_params(params, "ifract")

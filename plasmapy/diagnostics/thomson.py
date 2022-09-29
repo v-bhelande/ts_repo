@@ -399,7 +399,7 @@ def fast_spectral_density_arbdist(
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
             * np.interp(
                 xie[m],
-                (e_velocity_axes[m] - electron_vel_1d[i])
+                (e_velocity_axes[m] - electron_vel_1d[m])
                 / (np.sqrt(2) * vTe[m]),
                 efn[m],
             )
@@ -416,7 +416,7 @@ def fast_spectral_density_arbdist(
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
             * np.interp(
                 xii[m],
-                (i_velocity_axes[m] - ion_vel_1d[i])
+                (i_velocity_axes[m] - ion_vel_1d[m])
                 / (np.sqrt(2) * vTi[m]),
                 ifn[m],
             )

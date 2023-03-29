@@ -47,8 +47,8 @@ m_e_si_unitless = const.m_e.si.value
 
 #this imports the interpolated functions which have been pre-defined based on tabulated values of W
 path_to_plasmapy = os.path.dirname(inspect.getfile(plasmapy))
-W_real = pickle.load(open(path_to_plasmapy + "\\diagnostics\\W_real", 'rb'))
-W_imag = pickle.load(open(path_to_plasmapy + "\\diagnostics\\W_imag", 'rb'))
+W_real = pickle.load(open(path_to_plasmapy + "/diagnostics/W_real", 'rb'))
+W_imag = pickle.load(open(path_to_plasmapy + "/diagnostics/W_imag", 'rb'))
 
 
 # TODO: interface for inputting a multi-species configuration could be

@@ -33,6 +33,8 @@ from plasmapy.utils.decorators import (
     validate_quantities,
 )
 
+
+
 import plasmapy
 import os
 import inspect
@@ -66,15 +68,15 @@ def Wp(p, xi):
     as appropriate.'''
     
     #scalar inputs
-    if len(np.shape(xi))==1 and len(np.shape(p))==1:
+    if len(np.shape(xi))==0 and len(np.shape(p))==0:
         return W_real(p, xi)[0, 0] + 1.j * W_imag(p, xi)[0, 0]
     
     #scalar xi, vector p
-    elif len(np.shape(xi))==1 and len(np.shape(p))==2:
+    elif len(np.shape(xi))==0 and len(np.shape(p))==1:
         return W_real(p, xi)[:, 0] + 1.j * W_imag(p, xi)[:, 0]
     
     #vector xi, scalar p
-    elif len(np.shape(xi))==2 and len(np.shape(p))==1:
+    elif len(np.shape(xi))==1 and len(np.shape(p))==0:
         return W_real(p, xi)[0, :] + 1.j * W_imag(p, xi)[0, :]
     
     #vector inputs

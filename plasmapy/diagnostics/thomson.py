@@ -74,25 +74,17 @@ W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx = 3, ky = 3)
 
 #compute the derivative of the plasma dispersion function via tabulated functions
 def Wp(p, xi):
-    '''Because the interpolated spline objects return matrices by default, have
+    '''Have
     this function handle the overhead of converting the output to vector or scalar form
     as appropriate.'''
     
     #scalar inputs
     if len(np.shape(xi))==0 and len(np.shape(p))==0:
-        return W_real_interp(p, np.abs(xi))[0, 0] + 1.j * W_imag_interp(p, np.abs(xi))[0, 0]
-    
-    #scalar xi, vector p
-    elif len(np.shape(xi))==0 and len(np.shape(p))==1:
-        return W_real_interp(p, np.abs(xi))[:, 0] + 1.j * W_imag_interp(p, np.abs(xi))[:, 0]
-    
-    #vector xi, scalar p
-    elif len(np.shape(xi))==1 and len(np.shape(p))==0:
-        return W_real_interp(p, np.abs(xi))[0, :] + 1.j * W_imag_interp(p, np.abs(xi))[0, :]
+        return W_real_interp.ev(p, np.abs(xi))[0] + 1.j * W_imag_interp.ev(p, np.abs(xi))[0, 0]
     
     #vector inputs
     else:
-        return W_real_interp(p, np.abs(xi)) + 1.j * W_imag_interp(p, np.abs(xi))
+        return W_real_interp.ev(p, np.abs(xi)) + 1.j * W_imag_interp.ev(p, np.abs(xi))
     
     
 

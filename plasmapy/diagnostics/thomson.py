@@ -34,11 +34,11 @@ from plasmapy.utils.decorators import (
 )
 
 
-
 import plasmapy
 import os
 import inspect
-import pickle
+import h5py
+from scipy import interpolate
 
 __all__ += __lite_funcs__
 
@@ -47,11 +47,20 @@ e_si_unitless = const.e.si.value
 m_p_si_unitless = const.m_p.si.value
 m_e_si_unitless = const.m_e.si.value
 
-#this imports the interpolated functions which have been pre-defined based on tabulated values of W
+#this imports the tabulated data for W and then defines the interpolators
 path_to_plasmapy = os.path.dirname(inspect.getfile(plasmapy))
-W_real = pickle.load(open(path_to_plasmapy + "/diagnostics/W_real", 'rb'))
-W_imag = pickle.load(open(path_to_plasmapy + "/diagnostics/W_imag", 'rb'))
 
+hf = h5py.File(path_to_plasmapy + "/diagnostics/W_tabulated.h5", 'r')
+
+
+p = np.array(hf['p'])
+xi = np.array(hf['xi'])
+W_real = np.array(hf["W_real"])
+W_imag = np.array(hf["W_imag"])
+
+
+W_real_interp = interpolate.RectBivariateSpline(p, xi, W_real, kx = 3, ky = 3)
+W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx = 3, ky = 3)
 
 # TODO: interface for inputting a multi-species configuration could be
 #     simplified using the plasmapy.classes.plasma_base class if that class
@@ -69,19 +78,19 @@ def Wp(p, xi):
     
     #scalar inputs
     if len(np.shape(xi))==0 and len(np.shape(p))==0:
-        return W_real(p, xi)[0, 0] + 1.j * W_imag(p, xi)[0, 0]
+        return W_real_interp(p, np.abs(xi))[0, 0] + 1.j * W_imag_interp(p, np.abs(xi))[0, 0]
     
     #scalar xi, vector p
     elif len(np.shape(xi))==0 and len(np.shape(p))==1:
-        return W_real(p, xi)[:, 0] + 1.j * W_imag(p, xi)[:, 0]
+        return W_real_interp(p, np.abs(xi))[:, 0] + 1.j * W_imag_interp(p, np.abs(xi))[:, 0]
     
     #vector xi, scalar p
     elif len(np.shape(xi))==1 and len(np.shape(p))==0:
-        return W_real(p, xi)[0, :] + 1.j * W_imag(p, xi)[0, :]
+        return W_real_interp(p, np.abs(xi))[0, :] + 1.j * W_imag_interp(p, np.abs(xi))[0, :]
     
     #vector inputs
     else:
-        return W_real(p, xi) + 1.j * W_imag(p, xi)
+        return W_real_interp(p, np.abs(xi)) + 1.j * W_imag_interp(p, np.abs(xi))
     
     
 

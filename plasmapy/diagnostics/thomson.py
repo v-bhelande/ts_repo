@@ -5,9 +5,11 @@ Defines the Thomson scattering analysis module as part of
 
 __all__ = [
     "spectral_density",
+    "spectral_density_supergaussian"
     "spectral_density_model",
 ]
-__lite_funcs__ = ["spectral_density_lite"]
+__lite_funcs__ = ["spectral_density_lite", 
+                  "spectral_density_supergaussian_lite"]
 
 import astropy.constants as const
 import astropy.units as u
@@ -94,7 +96,7 @@ def Wp(p, xi):
     
     
 
-def spectral_density_lite(
+def spectral_density_supergaussian_lite(
     wavelengths,
     probe_wavelength: numbers.Real,
     n: numbers.Real,
@@ -210,7 +212,173 @@ def spectral_density_lite(
     if instr_func_arr is not None:
         Skw = np.convolve(Skw, instr_func_arr, mode="same")
     return np.mean(alpha), Skw
+
+def spectral_density_supergaussian(
+    wavelengths: u.nm,
+    probe_wavelength: u.nm,
+    n: u.m**-3,
+    *,
+    T_e: u.K,
+    T_i: u.K,
+    p_e=[2],
+    p_i=[2],
+    efract=None,
+    ifract=None,
+    ions: ParticleLike = "p+",
+    electron_vel: u.m / u.s = None,
+    ion_vel: u.m / u.s = None,
+    probe_vec=None,
+    scatter_vec=None,
+    instr_func: Optional[Callable] = None,
+) -> tuple[Union[np.floating, np.ndarray], np.ndarray]:
     
+    # Validate efract
+    if efract is None:
+        efract = np.ones(1)
+    else:
+        efract = np.asarray(efract, dtype=np.float64)
+        if np.sum(efract) != 1:
+            raise ValueError(f"The provided efract does not sum to 1: {efract}")
+
+    # Validate ifract
+    if ifract is None:
+        ifract = np.ones(1)
+    else:
+        ifract = np.asarray(ifract, dtype=np.float64)
+        if np.sum(ifract) != 1:
+            raise ValueError(f"The provided ifract does not sum to 1: {ifract}")
+
+    if probe_vec is None:
+        probe_vec = np.array([1, 0, 0])
+
+    if scatter_vec is None:
+        scatter_vec = np.array([0, 1, 0])
+
+    # If electron velocity is not specified, create an array corresponding
+    # to zero drift
+    if electron_vel is None:
+        electron_vel = np.zeros([efract.size, 3]) * u.m / u.s
+
+    # Condition the electron velocity keywords
+    if ion_vel is None:
+        ion_vel = np.zeros([ifract.size, 3]) * u.m / u.s
+
+    # Condition ions
+    # If a single value is provided, turn into a particle list
+    if isinstance(ions, ParticleList):
+        pass
+    elif isinstance(ions, str):
+        ions = ParticleList([Particle(ions)])
+    # If a list is provided, ensure all values are Particles, then convert
+    # to a ParticleList
+    elif isinstance(ions, list):
+        for ii, ion in enumerate(ions):
+            if isinstance(ion, Particle):
+                continue
+            ions[ii] = Particle(ion)
+        ions = ParticleList(ions)
+    else:
+        raise TypeError(
+            "The type of object provided to the ``ions`` keyword "
+            f"is not supported: {type(ions)}"
+        )
+
+    # Validate ions
+    if len(ions) == 0:
+        raise ValueError("At least one ion species needs to be defined.")
+
+    try:
+        if sum(ion.charge_number <= 0 for ion in ions):
+            raise ValueError("All ions must be positively charged.")  # noqa: TC301
+    # Catch error if charge information is missing
+    except ChargeError as ex:
+        raise ValueError("All ions must be positively charged.") from ex
+
+    # Condition T_i
+    if T_i.size == 1:
+        # If a single quantity is given, put it in an array so it's iterable
+        # If T_i.size != len(ions), assume same temp. for all species
+        T_i = np.array([T_i.value]) * T_i.unit
+
+    # Make sure the sizes of ions, ifract, ion_vel, and T_i all match
+    if (
+        (len(ions) != ifract.size)
+        or (ion_vel.shape[0] != ifract.size)
+        or (T_i.size != ifract.size)
+    ):
+        raise ValueError(
+            f"Inconsistent number of ion species in ifract ({ifract}), "
+            f"ions ({len(ions)}), T_i ({T_i.size}), "
+            f"and/or ion_vel ({ion_vel.shape[0]})."
+        )
+
+    # Condition T_e
+    if T_e.size == 1:
+        # If a single quantity is given, put it in an array so it's iterable
+        # If T_e.size != len(efract), assume same temp. for all species
+        T_e = np.array([T_e.value]) * T_e.unit
+
+    # Make sure the sizes of efract, electron_vel, and T_e all match
+    if (electron_vel.shape[0] != efract.size) or (T_e.size != efract.size):
+        raise ValueError(
+            f"Inconsistent number of electron populations in efract ({efract.size}), "
+            f"T_e ({T_e.size}), or electron velocity ({electron_vel.shape[0]})."
+        )
+
+    # Create arrays of ion Z and mass from particles given
+    ion_z = ions.charge_number
+    ion_mass = ions.mass
+
+    probe_vec = probe_vec / np.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
+
+    # Apply the instrument function
+    if instr_func is not None and callable(instr_func):
+        # Create an array of wavelengths of the same size as wavelengths
+        # but centered on zero
+        wspan = (np.max(wavelengths) - np.min(wavelengths)) / 2
+        eval_w = np.linspace(-wspan, wspan, num=wavelengths.size)
+        instr_func_arr = instr_func(eval_w)
+
+        if type(instr_func_arr) != np.ndarray:
+            raise ValueError(
+                "instr_func must be a function that returns a "
+                "np.ndarray, but the provided function returns "
+                f" a {type(instr_func_arr)}"
+            )
+
+        if wavelengths.shape != instr_func_arr.shape:
+            raise ValueError(
+                "The shape of the array returned from the "
+                f"instr_func ({instr_func_arr.shape}) "
+                "does not match the shape of the wavelengths "
+                f"array ({wavelengths.shape})."
+            )
+
+        instr_func_arr /= np.sum(instr_func_arr)
+    else:
+        instr_func_arr = None
+
+    alpha, Skw = spectral_density_supergaussian_lite(
+        wavelengths.to(u.m).value,
+        probe_wavelength.to(u.m).value,
+        n.to(u.m**-3).value,
+        T_e.to(u.K).value,
+        T_i.to(u.K).value,
+        p_e,
+        p_i,
+        efract=efract,
+        ifract=ifract,
+        ion_z=ion_z,
+        ion_mass=ion_mass.to(u.kg).value,
+        ion_vel=ion_vel.to(u.m / u.s).value,
+        electron_vel=electron_vel.to(u.m / u.s).value,
+        probe_vec=probe_vec,
+        scatter_vec=scatter_vec,
+        instr_func_arr=instr_func_arr,
+    )
+
+    return alpha, Skw * u.s / u.rad
 
 #OLD CODE BELOW-------------------------------------------------------------------------
 @preserve_signature

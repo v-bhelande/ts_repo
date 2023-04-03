@@ -41,6 +41,7 @@ import os
 import inspect
 import h5py
 from scipy import interpolate
+from numba import jit
 
 __all__ += __lite_funcs__
 
@@ -79,7 +80,7 @@ def Wp(p, zeta):
     return W_real_interp.ev(p, np.abs(zeta)) + 1.j * W_imag_interp.ev(p, np.abs(zeta))
 
     
-
+@jit(nopython=True)
 def spectral_density_supergaussian_lite(
     wavelengths,
     probe_wavelength: numbers.Real,
@@ -373,6 +374,7 @@ def spectral_density_supergaussian(
 
 #OLD CODE BELOW-------------------------------------------------------------------------
 @preserve_signature
+@jit(nopython=True)
 def spectral_density_lite(
     wavelengths,
     probe_wavelength: numbers.Real,

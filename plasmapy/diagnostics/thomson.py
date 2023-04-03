@@ -64,6 +64,8 @@ W_imag = np.array(hf["W_imag"])
 W_real_interp = interpolate.RectBivariateSpline(p, xi, W_real, kx = 3, ky = 3)
 W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx = 3, ky = 3)
 
+hf.close()
+
 # TODO: interface for inputting a multi-species configuration could be
 #     simplified using the plasmapy.classes.plasma_base class if that class
 #     included ion and electron drift velocities and information about the ion

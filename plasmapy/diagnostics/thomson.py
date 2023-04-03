@@ -73,19 +73,9 @@ W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx = 3, ky = 3)
 #SUPER-GAUSSIAN CODES
 
 #compute the derivative of the plasma dispersion function via tabulated functions
-def Wp(p, xi):
-    '''Have
-    this function handle the overhead of converting the output to vector or scalar form
-    as appropriate.'''
-    
-    #scalar inputs
-    if len(np.shape(xi))==0 and len(np.shape(p))==0:
-        return W_real_interp.ev(p, np.abs(xi))[0] + 1.j * W_imag_interp.ev(p, np.abs(xi))[0, 0]
-    
-    #vector inputs
-    else:
-        return W_real_interp.ev(p, np.abs(xi)) + 1.j * W_imag_interp.ev(p, np.abs(xi))
-    
+def Wp(p, zeta):
+    return W_real_interp.ev(p, np.abs(zeta)) + 1.j * W_imag_interp.ev(p, np.abs(zeta))
+
     
 
 def spectral_density_supergaussian_lite(
@@ -162,14 +152,14 @@ def spectral_density_supergaussian_lite(
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(efract):
         wpe = plasma_frequency_lite(ne[i], m_e_si_unitless, 1)
-        chiE[i, :] = wpe ** 2 / (2 * vT_e[i]**2 * k**2) * Wp(p_e[i], xe[i, :])
+        chiE[i, :] = 2*wpe ** 2 / (vT_e[i]**2 * k**2) * Wp(p_e[i], xe[i, :])
     
     # Treatment of multiple species is an extension of the discussion in
     # Sheffield Sec. 5.1
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(ifract):
         wpi = plasma_frequency_lite(ni[i], ion_mass[i], ion_z[i])
-        chiI[i, :] = wpi ** 2 / (2 * vT_i[i]**2 * k**2) * Wp(p_i[i], xe[i, :])
+        chiI[i, :] = 2*wpi ** 2 / (vT_i[i]**2 * k**2) * Wp(p_i[i], xi[i, :])
     
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
@@ -182,7 +172,7 @@ def spectral_density_supergaussian_lite(
             / k
             / vT_e[m]
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
-            * np.exp(-xe[m, :] ** 2)
+            * np.exp(-np.abs(xe[m, :]) ** p_e[m])
         )
 
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -194,7 +184,7 @@ def spectral_density_supergaussian_lite(
             / k
             / vT_i[m]
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
-            * np.exp(-xi[m, :] ** 2)
+            * np.exp(-np.abs(xi[m, :]) ** p_i[m])
         )
 
     # Recast as real: imaginary part is already zero
@@ -205,6 +195,13 @@ def spectral_density_supergaussian_lite(
         Skw = np.convolve(Skw, instr_func_arr, mode="same")
     return np.mean(alpha), Skw
 
+@validate_quantities(
+    wavelengths={"can_be_negative": False, "can_be_zero": False},
+    probe_wavelength={"can_be_negative": False, "can_be_zero": False},
+    n={"can_be_negative": False, "can_be_zero": False},
+    T_e={"can_be_negative": False, "equivalencies": u.temperature_energy()},
+    T_i={"can_be_negative": False, "equivalencies": u.temperature_energy()},
+)
 def spectral_density_supergaussian(
     wavelengths: u.nm,
     probe_wavelength: u.nm,

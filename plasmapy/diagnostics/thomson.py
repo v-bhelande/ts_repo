@@ -80,7 +80,7 @@ hf.close()
 
 #compute the derivative of the plasma dispersion function via tabulated functions
 def Wp(p, zeta):
-    return W_real_interp.ev(p, np.abs(zeta)) + 1.j * W_imag_interp.ev(p, np.abs(zeta))
+    return W_real_interp.ev(p, np.abs(zeta)) + 1.j * np.sign(zeta)*W_imag_interp.ev(p, np.abs(zeta))
 
     
 def spectral_density_supergaussian_lite(
@@ -175,6 +175,7 @@ def spectral_density_supergaussian_lite(
     
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
+    
 
     econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
     for m in range(efract.size):
@@ -189,6 +190,8 @@ def spectral_density_supergaussian_lite(
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
             * gammaincc(2/p_e[m], np.abs(ue[m, :])**p_e[m]) * gamma(2/p_e[m])
         )    
+        
+        plt.plot(econtr[0, :].real)
         
 
 

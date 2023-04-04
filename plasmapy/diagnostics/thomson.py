@@ -41,6 +41,9 @@ import os
 import inspect
 import h5py
 from scipy import interpolate
+from scipy.special import gamma, gammaincc
+import matplotlib.pyplot as plt
+
 #from numba import jit
 
 __all__ += __lite_funcs__
@@ -150,6 +153,13 @@ def spectral_density_supergaussian_lite(
     xe = np.outer(1 / vT_e, 1 / k) * w_e
     xi = np.outer(1 / vT_i, 1 / k) * w_i
     
+   
+    # Calculate vp-normalized phase velocities
+    ue = xe * (np.sqrt(2/3 * gamma(5/p_e) / gamma(3/p_e)))[:, None]
+    ui = xi * (np.sqrt(2/3 * gamma(5/p_i) / gamma(3/p_i)))[:, None]
+    
+    
+    
     # Calculate the susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(efract):
@@ -170,24 +180,34 @@ def spectral_density_supergaussian_lite(
     for m in range(efract.size):
         econtr[m, :] = efract[m] * (
             2
-            * np.sqrt(np.pi)
+            * np.pi
             / k
             / vT_e[m]
+            * p_e[m]
+            / (2*gamma(3/p_e[m]))
+            * (np.sqrt(2/3 * gamma(5/p_e) / gamma(3/p_e)))[m]
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
-            * np.exp(-np.abs(xe[m, :]) ** p_e[m])
-        )
+            * gammaincc(2/p_e[m], np.abs(ue[m, :])**p_e[m]) * gamma(2/p_e[m])
+        )    
+        
+
 
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for m in range(ifract.size):
         icontr[m, :] = ifract[m] * (
             2
-            * np.sqrt(np.pi)
+            * np.pi
             * ion_z[m]
             / k
             / vT_i[m]
+            * p_i[m]
+            / (2*gamma(3/p_i[m]))
+            * (np.sqrt(2/3 * gamma(5/p_i) / gamma(3/p_i)))[m]
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
-            * np.exp(-np.abs(xi[m, :]) ** p_i[m])
+            * gammaincc(2/p_i[m], np.abs(ui[m, :])**p_i[m]) * gamma(2/p_i[m])
         )
+    
+    
 
     # Recast as real: imaginary part is already zero
     Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))
@@ -356,8 +376,8 @@ def spectral_density_supergaussian(
         n.to(u.m**-3).value,
         T_e.to(u.K).value,
         T_i.to(u.K).value,
-        p_e,
-        p_i,
+        np.array(p_e),
+        np.array(p_i),
         efract=efract,
         ifract=ifract,
         ion_z=ion_z,

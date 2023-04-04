@@ -42,7 +42,6 @@ import inspect
 import h5py
 from scipy import interpolate
 from scipy.special import gamma, gammaincc
-import matplotlib.pyplot as plt
 
 #from numba import jit
 
@@ -207,10 +206,6 @@ def spectral_density_supergaussian_lite(
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
             * gammaincc(2/p_i[m], np.abs(ui[m, :])**p_i[m]) * gamma(2/p_i[m])
         )
-        
-        plt.plot(icontr[0, :].real)
-        plt.semilogy()
-        plt.se
     
     
 

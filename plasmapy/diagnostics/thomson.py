@@ -415,6 +415,327 @@ def spectral_density_supergaussian(
     return alpha, Skw * u.s / u.rad
 
 
+def _spectral_density_supergaussian_model(wavelengths, settings=None, **params):
+    """
+    lmfit Model function for fitting Thomson spectra
+    For descriptions of arguments, see the `thomson_model` function.
+    """
+
+    # LOAD FROM SETTINGS
+    ion_z = settings["ion_z"]
+    ion_mass = settings["ion_mass"]
+    probe_vec = settings["probe_vec"]
+    scatter_vec = settings["scatter_vec"]
+    electron_vdir = settings["electron_vdir"]
+    ion_vdir = settings["ion_vdir"]
+    probe_wavelength = settings["probe_wavelength"]
+    instr_func_arr = settings["instr_func_arr"]
+    notches = settings["notches"]
+
+    # LOAD FROM PARAMS
+    n = params["n"]
+    T_e = _params_to_array(params, "T_e")
+    T_i = _params_to_array(params, "T_i")
+    efract = _params_to_array(params, "efract")
+    ifract = _params_to_array(params, "ifract")
+    p_e = _params_to_array(params, "p_e")
+    p_i = _params_to_array(params, "p_i")
+
+    electron_speed = _params_to_array(params, "electron_speed")
+    ion_speed = _params_to_array(params, "ion_speed")
+
+    electron_vel = electron_speed[:, np.newaxis] * electron_vdir
+    ion_vel = ion_speed[:, np.newaxis] * ion_vdir
+
+    # Convert temperatures from eV to Kelvin (required by fast_spectral_density)
+    T_e *= 11604.51812155
+    T_i *= 11604.51812155
+
+    alpha, model_Skw = spectral_density_lite(
+        wavelengths,
+        probe_wavelength,
+        n,
+        T_e,
+        T_i,
+        efract=efract,
+        ifract=ifract,
+        p_e=p_e,
+        p_i=p_i,
+        ion_z=ion_z,
+        ion_mass=ion_mass,
+        electron_vel=electron_vel,
+        ion_vel=ion_vel,
+        probe_vec=probe_vec,
+        scatter_vec=scatter_vec,
+        instr_func_arr=instr_func_arr,
+        notches=notches,
+    )
+
+    model_Skw *= 1 / np.max(model_Skw)
+
+    return model_Skw
+
+
+def spectral_density_supergaussian_model(wavelengths, settings, params):
+    r"""
+    Returns a `lmfit.model.Model` function for Thomson spectral density
+    function.
+    Parameters
+    ----------
+    wavelengths : numpy.ndarray
+        Wavelength array, in meters.
+    settings : dict
+        A dictionary of non-variable inputs to the spectral density
+        function which must include the following keys:
+        - ``"probe_wavelength"``: Probe wavelength in meters
+        - ``"probe_vec"`` : (3,) unit vector in the probe direction
+        - ``"scatter_vec"``: (3,) unit vector in the scattering
+          direction
+        - ``"ions"`` : list of particle strings,
+          `~plasmapy.particles.particle_class.Particle` objects, or a
+          `~plasmapy.particles.particle_collections.ParticleList`
+          describing each ion species. All ions must be positive.
+        and may contain the following optional variables:
+        - ``"electron_vdir"`` : (e#, 3) array of electron velocity unit
+          vectors
+        - ``"ion_vdir"`` : (e#, 3) array of ion velocity unit vectors
+        - ``"instr_func"`` : A function that takes a wavelength
+          |Quantity| array and returns a spectrometer instrument
+          function as an `~numpy.ndarray`.
+        These quantities cannot be varied during the fit.
+    params : `~lmfit.parameter.Parameters` object
+        A `~lmfit.parameter.Parameters` object that must contain the
+        following variables:
+        - n: Total combined density of the electron populations in
+          m\ :sup:`-3`
+        - :samp:`T_e_{e#}` : Temperature in eV
+        - :samp:`T_i_{i#}` : Temperature in eV
+        where where :samp:`{i#}` and where :samp:`{e#}` are replaced by
+        the number of electron and ion populations, zero-indexed,
+        respectively (e.g., 0, 1, 2, ...). The
+        `~lmfit.parameter.Parameters` object may also contain the
+        following optional variables:
+        - :samp:`"efract_{e#}"` : Fraction of each electron population
+          (must sum to 1)
+        - :samp:`"ifract_{i#}"` : Fraction of each ion population (must
+          sum to 1)
+        - :samp:`"electron_speed_{e#}"` : Electron speed in m/s
+        - :samp:`"ion_speed_{ei}"` : Ion speed in m/s
+        These quantities can be either fixed or varying.
+    Returns
+    -------
+    model : `lmfit.model.Model`
+        An `lmfit.model.Model` of the spectral density function for the
+        provided settings and parameters that can be used to fit Thomson
+        scattering data.
+    Notes
+    -----
+    If an instrument function is included, the data should not include
+    any `numpy.nan` values — instead regions with no data should be
+    removed from both the data and wavelength arrays using
+    `numpy.delete`.
+    """
+
+    required_settings = {
+        "probe_wavelength",
+        "probe_vec",
+        "scatter_vec",
+        "ions",
+    }
+
+    if missing_settings := required_settings - set(settings):
+        raise ValueError(
+            f"The following required settings were not provided in the "
+            f"'settings' argument: {missing_settings}"
+        )
+
+    required_params = {"n"}
+    if missing_params := required_params - set(params):
+        raise ValueError(
+            f"The following required parameters were not provided in the "
+            f"'params': {missing_params}"
+        )
+
+    # **********************
+    # Count number of populations
+    # **********************
+    if "efract_0" not in params:
+        params.add("efract_0", value=1.0, vary=False)
+
+    if "ifract_0" not in params:
+        params.add("ifract_0", value=1.0, vary=False)
+
+    num_e = _count_populations_in_params(params, "efract")
+    num_i = _count_populations_in_params(params, "ifract")
+
+    # **********************
+    # Required settings and parameters per population
+    # **********************
+    for p, nums in zip(["T_e", "T_i", "p_e", "p_i"], [num_e, num_i]):
+        for num in range(nums):
+            key = f"{p}_{str(num)}"
+            if key not in params:
+                raise ValueError(
+                    f"{p} was not provided in kwarg 'parameters', but is required."
+                )
+
+    # **************
+    # ions
+    # **************
+
+    ions = settings["ions"]
+    # Condition ions
+    # If a single value is provided, turn into a particle list
+    if isinstance(ions, ParticleList):
+        pass
+    elif isinstance(ions, str):
+        ions = ParticleList([Particle(ions)])
+    # If a list is provided, ensure all values are Particles, then convert
+    # to a ParticleList
+    elif isinstance(ions, list):
+        for ii, ion in enumerate(ions):
+            if isinstance(ion, Particle):
+                continue
+            ions[ii] = Particle(ion)
+        ions = ParticleList(ions)
+    else:
+        raise TypeError(
+            "The type of object provided to the ``ions`` keyword "
+            f"is not supported: {type(ions)}"
+        )
+
+    # Validate ions
+    if len(ions) == 0:
+        raise ValueError("At least one ion species needs to be defined.")
+
+    try:
+        if sum(ion.charge_number <= 0 for ion in ions):
+            raise ValueError("All ions must be positively charged.")  # noqa: TC301
+    # Catch error if charge information is missing
+    except ChargeError as ex:
+        raise ValueError("All ions must be positively charged.") from ex
+
+    # Create arrays of ion Z and mass from particles given
+    settings["ion_z"] = ions.charge_number
+    settings["ion_mass"] = ions.mass
+
+    # **************
+    # efract and ifract
+    # **************
+
+    # Automatically add an expression to the last efract parameter to
+    # indicate that it depends on the others (so they sum to 1.0)
+    # The resulting expression for the last of three will look like
+    # efract_2.expr = "1.0 - efract_0 - efract_1"
+    if num_e > 1:
+        nums = ["1.0"] + [f"efract_{i}" for i in range(num_e - 1)]
+        params[f"efract_{num_e - 1}"].expr = " - ".join(nums)
+
+    if num_i > 1:
+        nums = ["1.0"] + [f"ifract_{i}" for i in range(num_i - 1)]
+        params[f"ifract_{num_i - 1}"].expr = " - ".join(nums)
+
+    # **************
+    # Electron velocity
+    # **************
+    electron_speed = np.zeros(num_e)
+    for num in range(num_e):
+        k = f"electron_speed_{num}"
+        if k in params:
+            electron_speed[num] = params[k].value
+        else:
+            # electron_speed[e] = 0 already
+            params.add(k, value=0, vary=False)
+
+    if "electron_vdir" not in settings:
+        if np.all(electron_speed == 0):
+            # vdir is arbitrary in this case because vel is zero
+            settings["electron_vdir"] = np.ones([num_e, 3])
+        else:
+            raise ValueError(
+                "Key 'electron_vdir' must be defined in kwarg 'settings' if "
+                "any electron population has a non-zero speed (i.e. any "
+                "params['electron_speed_<#>'] is non-zero)."
+            )
+    norm = np.linalg.norm(settings["electron_vdir"], axis=-1)
+    settings["electron_vdir"] = settings["electron_vdir"] / norm[:, np.newaxis]
+
+    # **************
+    # Ion velocity
+    # **************
+    ion_speed = np.zeros(num_i)
+    for num in range(num_i):
+        k = f"ion_speed_{num}"
+        if k in params:
+            ion_speed[num] = params[k].value
+        else:
+            # ion_speed[i] = 0 already
+            params.add(k, value=0, vary=False)
+
+    if "ion_vdir" not in list(settings.keys()):
+        if np.all(ion_speed == 0):
+            # vdir is arbitrary in this case because vel is zero
+            settings["ion_vdir"] = np.ones([num_i, 3])
+        else:
+            raise ValueError(
+                "Key 'ion_vdir' must be defined in kwarg 'settings' if "
+                "any ion population has a non-zero speed (i.e. any "
+                "params['ion_speed_<#>'] is non-zero)."
+            )
+    norm = np.linalg.norm(settings["ion_vdir"], axis=-1)
+    settings["ion_vdir"] = settings["ion_vdir"] / norm[:, np.newaxis]
+
+    if "instr_func" not in settings or settings["instr_func"] is None:
+        settings["instr_func_arr"] = None
+    else:
+        # Create instr_func array from instr_func
+        instr_func = settings["instr_func"]
+        wspan = (np.max(wavelengths) - np.min(wavelengths)) / 2
+        eval_w = np.linspace(-wspan, wspan, num=wavelengths.size)
+        instr_func_arr = instr_func(eval_w * u.m)
+
+        if type(instr_func_arr) != np.ndarray:
+            raise ValueError(
+                "instr_func must be a function that returns a "
+                "np.ndarray, but the provided function returns "
+                f" a {type(instr_func_arr)}"
+            )
+
+        if wavelengths.shape != instr_func_arr.shape:
+            raise ValueError(
+                "The shape of the array returned from the "
+                f"instr_func ({instr_func_arr.shape}) "
+                "does not match the shape of the wavelengths "
+                f"array ({wavelengths.shape})."
+            )
+
+        instr_func_arr *= 1 / np.sum(instr_func_arr)
+        settings["instr_func_arr"] = instr_func_arr
+
+        warnings.warn(
+            "If an instrument function is included, the data "
+            "should not include any `numpy.nan` values. "
+            "Instead regions with no data should be removed from "
+            "both the data and wavelength arrays using "
+            "`numpy.delete`."
+        )
+
+    if "notches" not in settings:
+        settings["notches"] = None
+
+    # TODO: raise an exception if the number of any of the ion or electron
+    #       quantities isn't consistent with the number of that species defined
+    #       by ifract or efract.
+
+    # Create and return the lmfit.Model
+    return Model(
+        _spectral_density_supergaussian_model,
+        independent_vars=["wavelengths"],
+        nan_policy="omit",
+        settings=settings,
+    )
+
+
 # OLD CODE BELOW-------------------------------------------------------------------------
 @preserve_signature
 def spectral_density_lite(

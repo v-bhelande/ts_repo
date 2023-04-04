@@ -184,14 +184,13 @@ def spectral_density_supergaussian_lite(
             * np.pi
             / k
             / vT_e[m]
-            * p_e[m]
             / (2*gamma(3/p_e[m]))
             * (np.sqrt(2/3 * gamma(5/p_e) / gamma(3/p_e)))[m]
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
             * gammaincc(2/p_e[m], np.abs(ue[m, :])**p_e[m]) * gamma(2/p_e[m])
         )    
         
-        plt.plot(econtr[0, :].real)
+        
         
 
 
@@ -203,12 +202,15 @@ def spectral_density_supergaussian_lite(
             * ion_z[m]
             / k
             / vT_i[m]
-            * p_i[m]
             / (2*gamma(3/p_i[m]))
             * (np.sqrt(2/3 * gamma(5/p_i) / gamma(3/p_i)))[m]
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
             * gammaincc(2/p_i[m], np.abs(ui[m, :])**p_i[m]) * gamma(2/p_i[m])
         )
+        
+        plt.plot(icontr[0, :].real)
+        plt.semilogy()
+        plt.se
     
     
 

@@ -8,17 +8,23 @@ __all__ = [
     "spectral_density_supergaussian",
     "spectral_density_model",
 ]
-__lite_funcs__ = ["spectral_density_lite", 
-                  "spectral_density_supergaussian_lite"]
+__lite_funcs__ = ["spectral_density_lite", "spectral_density_supergaussian_lite"]
 
 import astropy.constants as const
 import astropy.units as u
+import h5py
+import inspect
 import numbers
 import numpy as np
+import os
 import warnings
 
 from lmfit import Model
+from scipy import interpolate
+from scipy.special import gamma, gammaincc
 from typing import Any, Callable, Optional, Union
+
+import plasmapy
 
 from plasmapy.formulary import (
     permittivity_1D_Maxwellian_lite,
@@ -35,15 +41,7 @@ from plasmapy.utils.decorators import (
     validate_quantities,
 )
 
-
-import plasmapy
-import os
-import inspect
-import h5py
-from scipy import interpolate
-from scipy.special import gamma, gammaincc
-
-#from numba import jit
+# from numba import jit
 
 __all__ += __lite_funcs__
 
@@ -52,20 +50,20 @@ e_si_unitless = const.e.si.value
 m_p_si_unitless = const.m_p.si.value
 m_e_si_unitless = const.m_e.si.value
 
-#this imports the tabulated data for W and then defines the interpolators
+# this imports the tabulated data for W and then defines the interpolators
 path_to_plasmapy = os.path.dirname(inspect.getfile(plasmapy))
 
-hf = h5py.File(path_to_plasmapy + "/diagnostics/W_tabulated.h5", 'r')
+hf = h5py.File(path_to_plasmapy + "/diagnostics/W_tabulated.h5", "r")
 
 
-p = np.array(hf['p'])
-xi = np.array(hf['xi'])
+p = np.array(hf["p"])
+xi = np.array(hf["xi"])
 W_real = np.array(hf["W_real"])
 W_imag = np.array(hf["W_imag"])
 
 
-W_real_interp = interpolate.RectBivariateSpline(p, xi, W_real, kx = 3, ky = 3)
-W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx = 3, ky = 3)
+W_real_interp = interpolate.RectBivariateSpline(p, xi, W_real, kx=3, ky=3)
+W_imag_interp = interpolate.RectBivariateSpline(p, xi, W_imag, kx=3, ky=3)
 
 hf.close()
 
@@ -75,13 +73,16 @@ hf.close()
 #     atomic species.
 
 
-#SUPER-GAUSSIAN CODES
+# SUPER-GAUSSIAN CODES
 
-#compute the derivative of the plasma dispersion function via tabulated functions
+
+# compute the derivative of the plasma dispersion function via tabulated functions
 def Wp(p, zeta):
-    return W_real_interp.ev(p, np.abs(zeta)) + 1.j * np.sign(zeta)*W_imag_interp.ev(p, np.abs(zeta))
+    return W_real_interp.ev(p, np.abs(zeta)) + 1.0j * np.sign(zeta) * W_imag_interp.ev(
+        p, np.abs(zeta)
+    )
 
-    
+
 def spectral_density_supergaussian_lite(
     wavelengths,
     probe_wavelength: numbers.Real,
@@ -98,10 +99,9 @@ def spectral_density_supergaussian_lite(
     ion_vel: np.ndarray,
     probe_vec: np.ndarray,
     scatter_vec: np.ndarray,
+    notches: Optional[np.ndarray] = None,
     instr_func_arr: Optional[np.ndarray] = None,
 ) -> tuple[Union[np.floating, np.ndarray], np.ndarray]:
-    
-    
     scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
 
     # Calculate plasma parameters
@@ -151,30 +151,26 @@ def spectral_density_supergaussian_lite(
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xe = np.outer(1 / vT_e, 1 / k) * w_e
     xi = np.outer(1 / vT_i, 1 / k) * w_i
-    
-   
+
     # Calculate vp-normalized phase velocities
-    ue = xe * (np.sqrt(2/3 * gamma(5/p_e) / gamma(3/p_e)))[:, None]
-    ui = xi * (np.sqrt(2/3 * gamma(5/p_i) / gamma(3/p_i)))[:, None]
-    
-    
-    
+    ue = xe * (np.sqrt(2 / 3 * gamma(5 / p_e) / gamma(3 / p_e)))[:, None]
+    ui = xi * (np.sqrt(2 / 3 * gamma(5 / p_i) / gamma(3 / p_i)))[:, None]
+
     # Calculate the susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(efract):
         wpe = plasma_frequency_lite(ne[i], m_e_si_unitless, 1)
-        chiE[i, :] = 2*wpe ** 2 / (vT_e[i]**2 * k**2) * Wp(p_e[i], xe[i, :])
-    
+        chiE[i, :] = 2 * wpe**2 / (vT_e[i] ** 2 * k**2) * Wp(p_e[i], xe[i, :])
+
     # Treatment of multiple species is an extension of the discussion in
     # Sheffield Sec. 5.1
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(ifract):
         wpi = plasma_frequency_lite(ni[i], ion_mass[i], ion_z[i])
-        chiI[i, :] = 2*wpi ** 2 / (vT_i[i]**2 * k**2) * Wp(p_i[i], xi[i, :])
-    
+        chiI[i, :] = 2 * wpi**2 / (vT_i[i] ** 2 * k**2) * Wp(p_i[i], xi[i, :])
+
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
-    
 
     econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
     for m in range(efract.size):
@@ -183,15 +179,12 @@ def spectral_density_supergaussian_lite(
             * np.pi
             / k
             / vT_e[m]
-            / (2*gamma(3/p_e[m]))
-            * (np.sqrt(2/3 * gamma(5/p_e) / gamma(3/p_e)))[m]
+            / (2 * gamma(3 / p_e[m]))
+            * (np.sqrt(2 / 3 * gamma(5 / p_e) / gamma(3 / p_e)))[m]
             * np.power(np.abs(1 - np.sum(chiE, axis=0) / epsilon), 2)
-            * gammaincc(2/p_e[m], np.abs(ue[m, :])**p_e[m]) * gamma(2/p_e[m])
-        )    
-        
-        
-        
-
+            * gammaincc(2 / p_e[m], np.abs(ue[m, :]) ** p_e[m])
+            * gamma(2 / p_e[m])
+        )
 
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
     for m in range(ifract.size):
@@ -201,13 +194,12 @@ def spectral_density_supergaussian_lite(
             * ion_z[m]
             / k
             / vT_i[m]
-            / (2*gamma(3/p_i[m]))
-            * (np.sqrt(2/3 * gamma(5/p_i) / gamma(3/p_i)))[m]
+            / (2 * gamma(3 / p_i[m]))
+            * (np.sqrt(2 / 3 * gamma(5 / p_i) / gamma(3 / p_i)))[m]
             * np.power(np.abs(np.sum(chiE, axis=0) / epsilon), 2)
-            * gammaincc(2/p_i[m], np.abs(ui[m, :])**p_i[m]) * gamma(2/p_i[m])
+            * gammaincc(2 / p_i[m], np.abs(ui[m, :]) ** p_i[m])
+            * gamma(2 / p_i[m])
         )
-    
-    
 
     # Recast as real: imaginary part is already zero
     Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))
@@ -215,7 +207,19 @@ def spectral_density_supergaussian_lite(
     # Apply an instrument function if one is provided
     if instr_func_arr is not None:
         Skw = np.convolve(Skw, instr_func_arr, mode="same")
+
+    # add notch(es) to the spectrum if any are provided
+    if notches is not None:
+        if np.shape(notches) == (2,):
+            notches = np.array([notches])
+
+        for notch in notches:
+            x0 = np.argmin(np.abs(wavelengths - notch[0]))
+            x1 = np.argmin(np.abs(wavelengths - notch[1]))
+            Skw[x0:x1] = 0
+
     return np.mean(alpha), Skw
+
 
 @validate_quantities(
     wavelengths={"can_be_negative": False, "can_be_zero": False},
@@ -240,9 +244,9 @@ def spectral_density_supergaussian(
     ion_vel: u.m / u.s = None,
     probe_vec=None,
     scatter_vec=None,
+    notches=None,
     instr_func: Optional[Callable] = None,
 ) -> tuple[Union[np.floating, np.ndarray], np.ndarray]:
-    
     # Validate efract
     if efract is None:
         efract = np.ones(1)
@@ -370,6 +374,24 @@ def spectral_density_supergaussian(
     else:
         instr_func_arr = None
 
+    # Valildate notch input
+
+    if notches is not None:
+        notches_unitless = notches.to(u.m).value
+
+        if len(np.shape(notches_unitless)) == 1:
+            notches_unitless = np.array([notches_unitless])
+
+        for notch in notches_unitless:
+            if np.shape(notch) != (2,):
+                raise ValueError("Notches must be pairs of values")
+            if notch[0] > notch[1]:
+                raise ValueError(
+                    "First element of notch cannot be greater than second element."
+                )
+    else:
+        notches_unitless = None
+
     alpha, Skw = spectral_density_supergaussian_lite(
         wavelengths.to(u.m).value,
         probe_wavelength.to(u.m).value,
@@ -387,11 +409,13 @@ def spectral_density_supergaussian(
         probe_vec=probe_vec,
         scatter_vec=scatter_vec,
         instr_func_arr=instr_func_arr,
+        notches=notches_unitless,
     )
 
     return alpha, Skw * u.s / u.rad
 
-#OLD CODE BELOW-------------------------------------------------------------------------
+
+# OLD CODE BELOW-------------------------------------------------------------------------
 @preserve_signature
 def spectral_density_lite(
     wavelengths,
@@ -408,6 +432,7 @@ def spectral_density_lite(
     probe_vec: np.ndarray,
     scatter_vec: np.ndarray,
     instr_func_arr: Optional[np.ndarray] = None,
+    notches: Optional[np.ndarray] = None,
 ) -> tuple[Union[np.floating, np.ndarray], np.ndarray]:
     r"""
     The :term:`lite-function` version of
@@ -416,77 +441,60 @@ def spectral_density_lite(
     `~plasmapy.diagnostics.thomson.spectral_density`, but is intended
     for computational use and thus has data conditioning safeguards
     removed.
-
     Parameters
     ----------
     wavelengths : (Nλ,) `~numpy.ndarray`
         The wavelengths in meters over which the spectral density
         function will be calculated.
-
     probe_wavelength : real number
         Wavelength of the probe laser in meters.
-
     n : `~numpy.ndarray`
         Total combined number density of all electron populations in
         m\ :sup:`-3`\ .
-
     T_e : (Ne,) `~numpy.ndarray`
         Temperature of each electron population in kelvin, where Ne is
         the number of electron populations.
-
     T_i : (Ni,) `~numpy.ndarray`
         Temperature of each ion population in kelvin, where Ni is the
         number of ion populations.
-
     efract : (Ne,) `~numpy.ndarray`
         An `~numpy.ndarray` where each element represents the fraction
         (or ratio) of the electron population number density to the
         total electron number density. Must sum to 1.0. Default is a
         single electron population.
-
     ifract : (Ni,) `~numpy.ndarray`
         An `~numpy.ndarray` object where each element represents the
         fraction (or ratio) of the ion population number density to the
         total ion number density. Must sum to 1.0. Default is a single
         ion species.
-
     ion_z : (Ni,) `~numpy.ndarray`
         An `~numpy.ndarray` of the charge number :math:`Z` of each ion
         species.
-
     ion_mass : (Ni,) `~numpy.ndarray`
         An `~numpy.ndarray` of the mass of each ion species in kg.
-
     electron_vel : (Ne, 3) `~numpy.ndarray`
         Velocity of each electron population in the rest frame (in m/s).
         If set, overrides ``electron_vdir`` and ``electron_speed``.
         Defaults to a stationary plasma ``[0, 0, 0]`` m/s.
-
     ion_vel : (Ni, 3) `~numpy.ndarray`
         Velocity vectors for each electron population in the rest frame
         (in  m/s). If set, overrides ``ion_vdir`` and ``ion_speed``.
         Defaults to zero drift for all specified ion species.
-
     probe_vec : (3,) float `~numpy.ndarray`
         Unit vector in the direction of the probe laser. Defaults to
         ``[1, 0, 0]``.
-
     scatter_vec : (3,) float `~numpy.ndarray`
         Unit vector pointing from the scattering volume to the detector.
         Defaults to [0, 1, 0] which, along with the default ``probe_vec``,
         corresponds to a 90 degree scattering angle geometry.
-
     instr_func_arr : `~numpy.ndarray`, shape (Nwavelengths,) optional
         The instrument function evaluated at a linearly spaced range of
         wavelengths ranging from :math:`-W` to :math:`W`, where
-
         .. math::
             W = 0.5*(\max{λ} - \min{λ})
-
         Here :math:`λ` is the ``wavelengths`` array. This array will be
         convolved with the spectral density function before it is
         returned.
-
     Returns
     -------
     alpha : float
@@ -494,7 +502,6 @@ def spectral_density_lite(
         collective scattering and ``alpha`` < 1 indicates non-collective
         scattering. The scattering parameter is calculated based on the
         total plasma density :math:`n`.
-
     Skw : `~numpy.ndarray`
         Computed spectral density function over the input
         ``wavelengths`` array with units of s/rad.
@@ -595,6 +602,17 @@ def spectral_density_lite(
     # Apply an instrument function if one is provided
     if instr_func_arr is not None:
         Skw = np.convolve(Skw, instr_func_arr, mode="same")
+
+    # add notch(es) to the spectrum if any are provided
+    if notches is not None:
+        if np.shape(notches) == (2,):
+            notches = np.array([notches])
+
+        for notch in notches:
+            x0 = np.argmin(np.abs(wavelengths - notch[0]))
+            x1 = np.argmin(np.abs(wavelengths - notch[1]))
+            Skw[x0:x1] = 0
+
     return np.mean(alpha), Skw
 
 
@@ -621,74 +639,60 @@ def spectral_density(
     probe_vec=None,
     scatter_vec=None,
     instr_func: Optional[Callable] = None,
+    notches=None,
 ) -> tuple[Union[np.floating, np.ndarray], np.ndarray]:
     r"""Calculate the spectral density function for Thomson scattering of
     a probe laser beam by a multi-species Maxwellian plasma.
-
     Parameters
     ----------
     wavelengths : `~astropy.units.Quantity`
         The wavelengths over which the spectral density function will be
         calculated, in units convertible to m.
-
     probe_wavelength : `~astropy.units.Quantity`
         Wavelength of the probe laser, in units convertible to m.
-
     n : `~astropy.units.Quantity`
         Total combined number density of all electron populations, in
         units convertible to m\ :sup:`-3`\ .
-
     T_e : (Ne,) `~astropy.units.Quantity`, |keyword-only|
         Temperature of each electron population in units convertible to
         K or eV, where Ne is the number of electron populations.
-
     T_i : (Ni,) `~astropy.units.Quantity`, |keyword-only|
         Temperature of each ion population in units convertible to K or
         eV, where Ni is the number of ion populations.
-
     efract : (Ne,) |array_like|, |keyword-only|, optional
         The ratio of the number density of each electron population to
         the total electron number density, denoted by :math:`F_e` below.
         Must sum to one. The default corresponds to a single electron
         population.
-
     ifract : (Ni,) |array_like|, |keyword-only|, optional
         The fractional number densities of each ion population, denoted
         by :math:`F_i` below. Must sum to one. The default corresponds
         to a single ion population.
-
     ions : (Ni,) |particle-like|, |keyword-only|, default: "p+"
         One or more positively charged ions representing each ion
         population.
-
     electron_vel : (Ne, 3) `~astropy.units.Quantity`, |keyword-only|, optional
         Velocity vectors for each electron population in the rest frame,
         in units convertible to m/s. If set, overrides ``electron_vdir``
         and ``electron_speed``.  Defaults to a stationary plasma at
         :math:`[0, 0, 0]` m/s.
-
     ion_vel : (Ni, 3) `~astropy.units.Quantity`, |keyword-only|, optional
         Velocity vectors for each ion population in the rest frame, in
         units convertible to m/s. If set, overrides ``ion_vdir`` and
         ``ion_speed``. Defaults to zero drift for all specified ion
         species.
-
     probe_vec : (3,) |array_like|, |keyword-only|, default: [1, 0, 0]
         Unit vector in the direction of the probe laser.
-
     scatter_vec : (3,) |array_like|, |keyword-only|, default: [0, 1, 0]
         Unit vector pointing from the scattering volume to the
         detector. The default, along with the default for ``probe_vec``,
         corresponds to a 90° scattering angle geometry.
-
     instr_func : function
-
         A function representing the instrument function that takes a
         `~astropy.units.Quantity` of wavelengths (centered on zero)
         and returns the instrument point spread function. The
         resulting array will be convolved with the spectral density
         function before it is returned.
-
     Returns
     -------
     alpha : `float`
@@ -696,18 +700,15 @@ def spectral_density(
         collective scattering and ``alpha`` < 1 indicates
         non-collective scattering. The scattering parameter is
         calculated based on the total plasma density ``n``.
-
     Skw : `~astropy.units.Quantity`
         Computed spectral density function over the input
         ``wavelengths`` array with units of s/rad.
-
     Notes
     -----
     This function calculates the spectral density function for Thomson
     scattering of a probe laser beam by a plasma consisting of one or
     more ion species and one or more thermal electron populations (the
     entire plasma is assumed to be quasi-neutral):
-
     .. math::
         S(k,ω) = \sum_e \frac{2π}{k}
         \bigg |1 - \frac{χ_e}{ε} \bigg |^2
@@ -715,7 +716,6 @@ def spectral_density(
         \sum_i \frac{2π Z_i}{k}
         \bigg |\frac{χ_e}{ε} \bigg |^2 f_{i0,i}
         \bigg ( \frac{ω}{k} \bigg )
-
     where :math:`χ_e` is the electron population susceptibility of the
     plasma and :math:`ε = 1 + ∑_e χ_e + ∑_i χ_i` is the total plasma
     dielectric function (with :math:`χ_i` being the ion population of
@@ -726,38 +726,27 @@ def spectral_density(
     this function, the electron and ion velocity distribution functions
     are assumed to be Maxwellian, making this function equivalent to Eq.
     3.4.6 in :cite:t:`sheffield:2011`\ .
-
     The number density of the e\ :sup:`th` electron populations is
     defined as
-
     .. math::
         n_e = F_e n
-
     where :math:`n` is the total number density of all electron
     populations combined and :math:`F_e` is the fractional number
     density of each electron population such that
-
     .. math::
         \sum_e n_e = n
-
     .. math::
         \sum_e F_e = 1
-
     The plasma is assumed to be quasineutral, and therefore the number
     density of the i\ :sup:`th` ion population is
-
     .. math::
         n_i = \frac{F_i n}{∑_i F_i Z_i}
-
     with :math:`F_i` defined in the same way as :math:`F_e`.
-
     For details, see "Plasma Scattering of Electromagnetic Radiation"
     by :cite:t:`sheffield:2011`. This code is a modified version of
     the program described therein.
-
     For a summary of the relevant physics, see Chapter 5 of the
     :cite:t:`schaeffer:2014` thesis.
-
     """
 
     # Validate efract
@@ -887,6 +876,24 @@ def spectral_density(
     else:
         instr_func_arr = None
 
+    # Valildate notch input
+
+    if notches is not None:
+        notches_unitless = notches.to(u.m).value
+
+        if len(np.shape(notches_unitless)) == 1:
+            notches_unitless = np.array([notches_unitless])
+
+        for notch in notches_unitless:
+            if np.shape(notch) != (2,):
+                raise ValueError("Notches must be pairs of values")
+            if notch[0] > notch[1]:
+                raise ValueError(
+                    "First element of notch cannot be greater than second element."
+                )
+    else:
+        notches_unitless = None
+
     alpha, Skw = spectral_density_lite(
         wavelengths.to(u.m).value,
         probe_wavelength.to(u.m).value,
@@ -902,6 +909,7 @@ def spectral_density(
         probe_vec=probe_vec,
         scatter_vec=scatter_vec,
         instr_func_arr=instr_func_arr,
+        notches=notches_unitless,
     )
 
     return alpha, Skw * u.s / u.rad
@@ -917,7 +925,6 @@ def _count_populations_in_params(params: dict[str, Any], prefix: str) -> int:
     """
     Counts the number of electron or ion populations in a ``params``
     `dict`.
-
     The number of populations is determined by counting the number of
     items in the ``params`` `dict` with a key that starts with the
     string defined by ``prefix``.
@@ -932,14 +939,11 @@ def _params_to_array(
     Constructs an array from the values contained in the dictionary
     ``params`` associated with keys starting with the prefix defined by
     ``prefix``.
-
     If ``vector == False``, then values for keys matching the expression
     ``prefix_[0-9]+`` are gathered into a 1D array.
-
     If ``vector == True``, then values for keys matching the expression
     ``prefix_[xyz]_[0-9]+`` are gathered into a 2D array of shape
     ``(N, 3)``.
-
     Notes
     -----
     This function allows `lmfit.parameter.Parameter` inputs to be
@@ -971,7 +975,6 @@ def _params_to_array(
 def _spectral_density_model(wavelengths, settings=None, **params):
     """
     lmfit Model function for fitting Thomson spectra
-
     For descriptions of arguments, see the `thomson_model` function.
     """
 
@@ -984,6 +987,7 @@ def _spectral_density_model(wavelengths, settings=None, **params):
     ion_vdir = settings["ion_vdir"]
     probe_wavelength = settings["probe_wavelength"]
     instr_func_arr = settings["instr_func_arr"]
+    notches = settings["notches"]
 
     # LOAD FROM PARAMS
     n = params["n"]
@@ -1017,6 +1021,7 @@ def _spectral_density_model(wavelengths, settings=None, **params):
         probe_vec=probe_vec,
         scatter_vec=scatter_vec,
         instr_func_arr=instr_func_arr,
+        notches=notches,
     )
 
     model_Skw *= 1 / np.max(model_Skw)
@@ -1028,16 +1033,13 @@ def spectral_density_model(wavelengths, settings, params):
     r"""
     Returns a `lmfit.model.Model` function for Thomson spectral density
     function.
-
     Parameters
     ----------
     wavelengths : numpy.ndarray
         Wavelength array, in meters.
-
     settings : dict
         A dictionary of non-variable inputs to the spectral density
         function which must include the following keys:
-
         - ``"probe_wavelength"``: Probe wavelength in meters
         - ``"probe_vec"`` : (3,) unit vector in the probe direction
         - ``"scatter_vec"``: (3,) unit vector in the scattering
@@ -1046,49 +1048,39 @@ def spectral_density_model(wavelengths, settings, params):
           `~plasmapy.particles.particle_class.Particle` objects, or a
           `~plasmapy.particles.particle_collections.ParticleList`
           describing each ion species. All ions must be positive.
-
         and may contain the following optional variables:
-
         - ``"electron_vdir"`` : (e#, 3) array of electron velocity unit
           vectors
         - ``"ion_vdir"`` : (e#, 3) array of ion velocity unit vectors
         - ``"instr_func"`` : A function that takes a wavelength
           |Quantity| array and returns a spectrometer instrument
           function as an `~numpy.ndarray`.
-
         These quantities cannot be varied during the fit.
-
     params : `~lmfit.parameter.Parameters` object
         A `~lmfit.parameter.Parameters` object that must contain the
         following variables:
-
         - n: Total combined density of the electron populations in
           m\ :sup:`-3`
         - :samp:`T_e_{e#}` : Temperature in eV
         - :samp:`T_i_{i#}` : Temperature in eV
-
         where where :samp:`{i#}` and where :samp:`{e#}` are replaced by
         the number of electron and ion populations, zero-indexed,
         respectively (e.g., 0, 1, 2, ...). The
         `~lmfit.parameter.Parameters` object may also contain the
         following optional variables:
-
         - :samp:`"efract_{e#}"` : Fraction of each electron population
           (must sum to 1)
         - :samp:`"ifract_{i#}"` : Fraction of each ion population (must
           sum to 1)
         - :samp:`"electron_speed_{e#}"` : Electron speed in m/s
         - :samp:`"ion_speed_{ei}"` : Ion speed in m/s
-
         These quantities can be either fixed or varying.
-
     Returns
     -------
     model : `lmfit.model.Model`
         An `lmfit.model.Model` of the spectral density function for the
         provided settings and parameters that can be used to fit Thomson
         scattering data.
-
     Notes
     -----
     If an instrument function is included, the data should not include
@@ -1281,6 +1273,9 @@ def spectral_density_model(wavelengths, settings, params):
             "`numpy.delete`."
         )
 
+    if "notches" not in settings:
+        settings["notches"] = None
+
     # TODO: raise an exception if the number of any of the ion or electron
     #       quantities isn't consistent with the number of that species defined
     #       by ifract or efract.
@@ -1292,4 +1287,3 @@ def spectral_density_model(wavelengths, settings, params):
         nan_policy="omit",
         settings=settings,
     )
-

@@ -471,7 +471,7 @@ def _spectral_density_supergaussian_model(wavelengths, settings=None, **params):
         notches=notches,
     )
 
-    model_Skw *= 1 / np.max(model_Skw)
+    model_Skw *= 1 / np.trapz(model_Skw, wavelengths)
 
     return model_Skw
 
@@ -1345,7 +1345,7 @@ def _spectral_density_model(wavelengths, settings=None, **params):
         notches=notches,
     )
 
-    model_Skw *= 1 / np.max(model_Skw)
+    model_Skw *= 1 / np.trapz(model_Skw, wavelengths)
 
     return model_Skw
 

@@ -446,7 +446,7 @@ def fast_spectral_density_arbdist(
     # Normalize result to have integral 1
     Skw = Skw / np.trapz(Skw, wavelengths)
 
-    return np.mean(alpha), Skw, chiE, chiI
+    return np.mean(alpha), Skw, xie, chiE, xii, chiI
     
 
 

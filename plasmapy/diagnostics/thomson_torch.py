@@ -22,7 +22,7 @@ import re
 import warnings
 
 from lmfit import Model
-from numba import jit
+# from numba import jit
 from typing import List, Tuple, Union
 
 from plasmapy.formulary.dielectric import fast_permittivity_1D_Maxwellian

@@ -43,7 +43,8 @@ def derivativePT(f, x, order):
 
     # Reshape f to match conv1d args (Input should be of shape: 1 x 1 x length of array)
     f_size_list = len(f)  # Get number of elements in f
-    f = f.reshape(1,1,f_size_list)      
+    f = f.reshape(1,1,f_size_list) 
+    f = pt.from_numpy(f)
 
     if order == 1:
         kernel1 = (pt.tensor([[[1.,-8.,0.,8.,-1.]]], dtype=pt.float64))/(12*dx)   # [[[1.],[-8.],[0],[8.],[1.]]] is a 4D tensor...

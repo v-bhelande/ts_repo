@@ -42,7 +42,7 @@ def derivativePT(f, x, order):
     dx = x[1]-x[0]
 
     # Reshape f to match conv1d args (Input should be of shape: 1 x 1 x length of array)
-    f_size_list = f.size  # Get number of elements in f
+    f_size_list = len(f)  # Get number of elements in f
     f = f.reshape(1,1,f_size_list)      
 
     if order == 1:

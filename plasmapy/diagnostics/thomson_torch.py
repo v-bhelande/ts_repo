@@ -69,7 +69,7 @@ def derivative(f, x, order):
 
 # FIRST FUNCTION CHANGED ENDS HERE
 
-@jit(nopython=True)
+# @jit(nopython=True)   # Throws error since numba can't recognize changes to derivative function
 def chi(
     f,
     u_axis,

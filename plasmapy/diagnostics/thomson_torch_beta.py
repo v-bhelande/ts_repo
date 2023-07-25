@@ -62,8 +62,8 @@ def derivative(f, x, order):
   res = derivativePT(f, x, order)
 
   # Convert back to 1D tensor
-  f_size_list = list(f.size())
-  res = res.reshape(f_size_list[2])   # Extracts 3rd dimension of tensor
+  res_size_list = list(res.size())
+  res = res.reshape(res_size_list[2])   # Extracts 3rd dimension of tensor
   # Convert to np array
 
   return res.detach().numpy()

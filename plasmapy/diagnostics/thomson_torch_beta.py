@@ -59,14 +59,14 @@ def derivativePT(f, x, order):
 # Intermediate function to convert tensor back to array for testing
 def derivative(f, x, order):
   # Make call to torch derivative function
-  f = derivativePT(f, x, order)
+  res = derivativePT(f, x, order)
 
   # Convert back to 1D tensor
   f_size_list = list(f.size())
-  f = f.reshape(f_size_list[2])   # Extracts 3rd dimension of tensor
+  res = res.reshape(f_size_list[2])   # Extracts 3rd dimension of tensor
   # Convert to np array
 
-  return f.detach().numpy()
+  return res.detach().numpy()
 
 # FIRST FUNCTION CHANGED ENDS HERE
 

@@ -92,11 +92,10 @@ def derivative(f, x, order):
         print("finDiffMat:", finDiffMat)
 
         f = (1./dx)*pt.matmul(finDiffMat, f)
-
-        return f
+        # return f
 
         # Returns f as np.array
-        # return f.detach().numpy()
+        return f.detach().numpy()
 
     elif order == 2:
         # Forward difference elements

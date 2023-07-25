@@ -89,7 +89,7 @@ def derivative(f, x, order):
           finDiffMat[i][i+1] = 8./12.
           finDiffMat[i][i+2] = -1./12.
 
-        print("finDiffMat:", finDiffMat)
+        # print("finDiffMat:", finDiffMat)
 
         f = (1./dx)*pt.matmul(finDiffMat, f)
         # return f
@@ -137,7 +137,7 @@ def derivative(f, x, order):
           finDiffMat[i][i+1] = 4./3.
           finDiffMat[i][i+2] = -1./12.
 
-        print("finDiffMat:", finDiffMat)
+        # print("finDiffMat:", finDiffMat)
 
         f = (1./dx**2)*pt.matmul(finDiffMat, f)
         # return f

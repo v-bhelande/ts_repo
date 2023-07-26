@@ -40,7 +40,7 @@ _m_e = const.m_e.si.value
 @pt.compile     # Alternative to numba jit: https://pytorch.org/tutorials//intermediate/torch_compile_tutorial.html
 def derivative(f, x, order):
     dx = x[1]-x[0]
-    print("dx:", dx)
+    # print("dx:", dx)
 
     # Assumes f is 1D
     finDiffMat = pt.zeros(len(f), len(f), dtype = pt.float64)

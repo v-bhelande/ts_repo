@@ -258,7 +258,7 @@ def chiPT(
     gm = interpolate(zm, u_axis, fPrime)
     gp = interpolate(zp, u_axis, fPrime)
 
-    print("gm Interpolation before slicing:", gm)
+    # print("gm Interpolation before slicing:", gm)
 
     # Slice tensors
     gm = pt.select(gm,0,0)

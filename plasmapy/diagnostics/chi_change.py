@@ -152,10 +152,10 @@ def chiPT(
     """
 
     # Take f' = df/du and f" = d^2f/d^2u
-    fPrime = derivativePT(f=f, x=u_axis, order=1)
+    fPrime = derivative(f=f, x=u_axis, order=1)
     # print("fPrime:", fPrime)
 
-    fDoublePrime = derivativePT(f=f, x=u_axis, order=2)
+    fDoublePrime = derivative(f=f, x=u_axis, order=2)
     # print("fDoublePrime:", fDoublePrime)
 
     # Interpolate f' and f" onto xi

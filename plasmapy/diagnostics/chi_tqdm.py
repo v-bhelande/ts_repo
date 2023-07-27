@@ -459,7 +459,7 @@ def fast_spectral_density_arbdist(
 
     # Electron susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
-    for i in range(len(tqdm(efract))):    # INSERTED TQDM HERE
+    for i in tqdm(range(len(efract))):    # INSERTED TQDM HERE
         chiE[i, :] = chi(
             f=efn[i],
             u_axis=(
@@ -480,7 +480,7 @@ def fast_spectral_density_arbdist(
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
-    for i in range(len(tqdm(ifract))):    # INSERTED TQDM HERE
+    for i in tqdm(range(len(ifract))):    # INSERTED TQDM HERE
         chiI[i, :] = chi(
             f=ifn[i],
             u_axis=(i_velocity_axes[i] - ion_vel_1d[i])

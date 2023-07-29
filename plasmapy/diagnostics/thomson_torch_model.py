@@ -411,10 +411,10 @@ def fast_spectral_density_arbdist(
     probe_wavelength,
     e_velocity_axes,
     i_velocity_axes,
-    efn,    # efn = electron fraction
+    efn,    # efn = electron vdf
     ifn,
     n,
-    notches: u.nm = None,  # What are notches?
+    notches: u.nm = None,  
     efract: np.ndarray = np.array([1.0]),
     ifract: np.ndarray = np.array([1.0]),
     ion_z=np.array([1]),
@@ -424,9 +424,8 @@ def fast_spectral_density_arbdist(
     scattered_power=False,
     inner_range=0.1,
     inner_frac=0.8,
-) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:    # Python set Union() Method returns a new set which contains all the items from the original set
-                                                           # A tuple is a collection which is ordered and unchangeable, it allows duplicate items
-
+) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
+    
     # Convert arguments passed to tensors
     wavelengths = pt.as_tensor(wavelengths, dtype = pt.float64)
     e_velocity_axes = pt.as_tensor(e_velocity_axes, dtype = pt.float64)
@@ -439,8 +438,6 @@ def fast_spectral_density_arbdist(
     ion_m = pt.as_tensor(ion_m, dtype = pt.float64)
     probe_vec=pt.as_tensor(probe_vec, dtype = pt.float64)
     scatter_vec=pt.as_tensor(scatter_vec, dtype = pt.float64)
-    # inner_range=pt.as_tensor([0.1], dtype = pt.float64)
-    # inner_frac=pt.as_tensor([0.8], dtype = pt.float64)
 
     # Ensure unit vectors are normalized
     probe_vec = probe_vec / pt.linalg.norm(probe_vec)
@@ -466,9 +463,9 @@ def fast_spectral_density_arbdist(
         electron_vel_1d = pt.concatenate((electron_vel_1d, pt.tensor([bulk_velocity])))
         vTe = pt.concatenate((vTe, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
 
-    print("electron_vel:", electron_vel)
-    print("electron_vel_1d:", electron_vel_1d)
-    print("vTe:", vTe)
+    # print("electron_vel:", electron_vel)
+    # print("electron_vel_1d:", electron_vel_1d)
+    # print("vTe:", vTe)
 
     ion_vel = pt.tensor([])
     ion_vel_1d = pt.tensor([])
@@ -484,15 +481,15 @@ def fast_spectral_density_arbdist(
         ion_vel_1d = pt.concatenate((ion_vel_1d, pt.tensor([bulk_velocity])))
         vTi = pt.concatenate((vTi, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
 
-    print("ion_vel:", ion_vel)
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
+    # print("ion_vel:", ion_vel)
+    # print("ion_vel_1d:", ion_vel_1d)
+    # print("vTi:", vTi)
 
     # Define some constants
     C = pt.tensor([299792458], dtype = pt.float64)  # speed of light
 
     # Calculate plasma parameters
-    zbar = pt.sum(ifract * ion_z)       # What is zbar?
+    zbar = pt.sum(ifract * ion_z)     
     ne = efract * n
     ni = ifract * n / zbar  # ne/zbar = sum(ni)
 
@@ -551,10 +548,10 @@ def fast_spectral_density_arbdist(
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
     # Electron susceptibilities
-    print("efract.size():", efract.size())
-    print("efract.size():", len(efract))
-    print("w.size():", w.size())
-    print("w.size():", len(w))
+    # print("efract.size():", efract.size())
+    # print("efract.size():", len(efract))
+    # print("w.size():", w.size())
+    # print("w.size():", len(w))
     chiE = pt.zeros((len(efract), len(w)), dtype=pt.complex128)
     for i in range(len(efract)):
         chiE[i, :] = chi(
@@ -662,7 +659,6 @@ def fast_spectral_density_arbdist(
 
     # print("S(k,w) before normalization:", Skw)
 
-    """
     # Account for notch(es)
     for myNotch in notches:
         if len(myNotch) != 2:
@@ -671,7 +667,6 @@ def fast_spectral_density_arbdist(
         x0 = pt.argmin(pt.abs(wavelengths - myNotch[0]))
         x1 = pt.argmin(pt.abs(wavelengths - myNotch[1]))
         Skw[x0:x1] = 0
-    """
 
     # Normalize result to have integral 1
     Skw = Skw / pt.trapz(Skw, wavelengths)
@@ -679,10 +674,11 @@ def fast_spectral_density_arbdist(
     # print("S(k,w) after normalization:", Skw)
 
     # Convert to np and return
+    alpha = pt.mean(alpha)
     alpha = alpha.detach().numpy()
     Skw = Skw.detach().numpy()
 
-    return np.mean(alpha), Skw
+    return alpha, Skw
 
 def spectral_density_arbdist(
     wavelengths: u.nm,

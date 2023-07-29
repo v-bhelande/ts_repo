@@ -37,7 +37,7 @@ _m_e = const.m_e.si.value
 
 # FIRST FUNCTION CHANGED BEGINS HERE
 
-@torch.jit.script     # Alternative to numba jit: https://pytorch.org/tutorials//intermediate/torch_compile_tutorial.html
+@pt.jit.script     # Alternative to numba jit: https://pytorch.org/tutorials//intermediate/torch_compile_tutorial.html
 def derivativePT(f, x, order):
     dx = x[1]-x[0]
 

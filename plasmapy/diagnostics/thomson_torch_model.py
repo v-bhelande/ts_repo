@@ -462,14 +462,14 @@ def fast_spectral_density_arbdist(
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
-    ws = pt.tensor(2 * pt.pi * C / wavelengths)
-    wl = pt.tensor(2 * pt.pi * C / probe_wavelength)
+    ws = pt.tensor([2 * pt.pi * C / wavelengths], dtype = pt.float64)
+    wl = pt.tensor([2 * pt.pi * C / probe_wavelength], dtype = pt.float64)
 
     # print("ws:", ws)
     # print("wl:", wl)
 
     # Compute the frequency shift (required by energy conservation)
-    w = pt.tensor(ws - wl)
+    w = ws - wl
     # print("w:", w)
 
     # Compute the wavenumbers in the plasma

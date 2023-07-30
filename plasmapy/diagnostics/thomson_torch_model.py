@@ -870,6 +870,9 @@ def fast_spectral_density_maxwellian(
         
     Skw = Skw / np.trapz(Skw, wavelengths)
 
+    print("alpha:", np.mean(alpha))
+    print("Skw:", Skw)
+
     return np.mean(alpha), Skw
 
 

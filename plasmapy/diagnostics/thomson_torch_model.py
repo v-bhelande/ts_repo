@@ -219,9 +219,6 @@ def torch_1d_interp(
     answer = pt.where(x > xp[-1], right, answer)
     return answer
 
-# EDITION FOR FLATTENING AND RESHAPING gm AND gp INTERPOLATE FUNCTIONS
-
-# @jit(nopython=True)   # Throws error since numba can't recognize changes to derivative function
 def chi(
     f,
     u_axis,
@@ -259,11 +256,9 @@ def chi(
 
     # Interpolate f' and f" onto xi
     g = torch_1d_interp(xi, u_axis, fPrime)
-    # g = pt.select(g,0,0)   # Slice into 1D array
     # print("g Interpolation:", g)
 
     gPrime = torch_1d_interp(xi, u_axis, fDoublePrime)
-    # gPrime = pt.select(gPrime,0,0)    # Slice into 1D array
     # print("g' Interpolation:", gPrime)
 
     # CONVERT INPUTS TO TENSORS
@@ -276,8 +271,6 @@ def chi(
     nPoints=pt.tensor(nPoints, dtype=pt.float64)
     inner_range=pt.tensor(inner_range, dtype=pt.float64)
     inner_frac=pt.tensor(inner_frac, dtype=pt.float64)
-
-    # WILL NEED TO SLICE OUTPUT FOR REST OF CALCULATIONS
 
     # Set up integration ranges and spacing
     # We need fine divisions near the asymptote, but not at infinity
@@ -341,43 +334,11 @@ def chi(
     zmDims = list(zm.size())
     zpDims = list(zp.size())
 
-    # Why does gm and gp give incorrect output?
-
-    # Flatten zm tensor for interpolation
-    # zm = pt.flatten(zm)
-    # print("Now, zm:", zm)
-
-    # zp = pt.flatten(zp)
-    # print("Now, zp:", zp)
-
-    # print("THESE ARGUMENTS ARE GOING INTO gm INTERPOLATION!!!")
-    # print("u_axis:", u_axis)
-    # print("fPrime:", fPrime)
-
     gm = torch_1d_interp(zm, u_axis, fPrime)
     gp = torch_1d_interp(zp, u_axis, fPrime)
 
-    # print("gm Interpolation before slicing:", gm)
-
-    # Slice tensors
-    # gm = pt.select(gm,0,0)
-    # gp = pt.select(gp,0,0)
-
-    # np array
-    # print("gm np array:", gm.detach().numpy())
-
-    # Restore gm and gp to match original zm and zp dimensions respectively
-
-    # gm = restore2D(zmDims, gm)
-    # gm = pt.reshape(gm, [100,499])
-    # print("gm.size:", gm.size())
-
-    # gp = restore2D(zpDims, gp)
-    # gm = pt.reshape(gm, [100,499])
-    # print(gp.size())
-
     # print("gm Interpolation:", gm)
-    # print("gp:", gp)
+    # print("gp Interpolation:", gp)
 
     # Evaluate integral (df/du / (u - xi)) du
     M_array = m_deltas * gm / m_point_array
@@ -495,7 +456,8 @@ def fast_spectral_density_arbdist(
 
     # wpe is calculated for the entire plasma (all electron populations combined)
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
-    wpe = pt.tensor(pt.sqrt(pt.tensor(n * 3182.60735)))
+    n = pt.tensor([n * 3182.60735], dtype = pt.float64)
+    wpe = pt.sqrt(n)
     # print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so

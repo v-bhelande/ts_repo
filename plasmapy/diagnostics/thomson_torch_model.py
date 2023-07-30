@@ -361,7 +361,7 @@ def chi(
     wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)
 
     # Coefficient
-    coefficient = -wpl2 / k ** 2 / (pt.sqrt(pt.tensor([2])) * v_th)
+    coefficient = -wpl2 / k ** 2 / (pt.sqrt(pt.tensor(2)) * v_th)
 
     # print("Coefficient:", coefficient)
 
@@ -462,14 +462,14 @@ def fast_spectral_density_arbdist(
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
-    ws = pt.tensor((2 * pt.pi * C / wavelengths))
-    wl = pt.tensor((2 * pt.pi * C / probe_wavelength))
+    ws = pt.tensor(2 * pt.pi * C / wavelengths)
+    wl = pt.tensor(2 * pt.pi * C / probe_wavelength)
 
     # print("ws:", ws)
     # print("wl:", wl)
 
     # Compute the frequency shift (required by energy conservation)
-    w = ws - wl
+    w = pt.tensor(ws - wl)
     # print("w:", w)
 
     # Compute the wavenumbers in the plasma
@@ -498,7 +498,7 @@ def fast_spectral_density_arbdist(
 
     # Compute the scattering parameter alpha
     # expressed here using the fact that v_th/w_p = root(2) * Debye length
-    alpha = pt.sqrt(pt.tensor([2])) * wpe / pt.outer(k, vTe)
+    alpha = pt.sqrt(pt.tensor(2)) * wpe / pt.outer(k, vTe)
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xie = (pt.outer(1 / vTe, 1 / k) * w_e) / pt.sqrt(pt.tensor([2]))
@@ -636,13 +636,11 @@ def fast_spectral_density_arbdist(
     # print("S(k,w) after normalization:", Skw)
 
     # Convert to np and return
+    alpha = pt.mean(alpha)
     alpha = alpha.detach().numpy()
     Skw = Skw.detach().numpy()
 
-    print("alpha:", np.mean(alpha))
-    print("Skw:", Skw)
-
-    return np.mean(alpha), Skw
+    return alpha, Skw
 
 def spectral_density_arbdist(
     wavelengths: u.nm,
@@ -872,9 +870,6 @@ def fast_spectral_density_maxwellian(
         Skw[x0:x1] = 0
         
     Skw = Skw / np.trapz(Skw, wavelengths)
-
-    print("alpha:", np.mean(alpha))
-    print("Skw:", Skw)
 
     return np.mean(alpha), Skw
 

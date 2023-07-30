@@ -462,8 +462,8 @@ def fast_spectral_density_arbdist(
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
-    ws = pt.tensor([2 * pt.pi * C / wavelengths], dtype = pt.float64)
-    wl = pt.tensor([2 * pt.pi * C / probe_wavelength], dtype = pt.float64)
+    ws = pt.tensor((2 * pt.pi * C / wavelengths))
+    wl = pt.tensor((2 * pt.pi * C / probe_wavelength))
 
     # print("ws:", ws)
     # print("wl:", wl)

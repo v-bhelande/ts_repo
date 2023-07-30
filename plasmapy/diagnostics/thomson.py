@@ -431,6 +431,7 @@ def fast_spectral_density_arbdist(
 
     # Convert to power spectrum if option is enabled
     if scattered_power:
+        print("SCATTERED POWER")
         # Conversion factor
         Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2) 
         #this is to convert from S(frequency) to S(wavelength), there is an 
@@ -450,8 +451,8 @@ def fast_spectral_density_arbdist(
     # Normalize result to have integral 1
     Skw = Skw / np.trapz(Skw, wavelengths)
 
-    print("alpha:", np.mean(alpha))
-    print("Skw:", Skw)
+    # print("alpha:", np.mean(alpha))
+    p# rint("Skw:", Skw)
 
     return np.mean(alpha), Skw
     
@@ -1160,6 +1161,9 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         inst_fcn_arr=inst_fcn_arr,
         scattered_power=True,
     )
+
+    print("alpha:", alpha)
+    print("S(k,w):", model_Pw)
 
     return model_Pw
 

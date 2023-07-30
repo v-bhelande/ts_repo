@@ -147,6 +147,69 @@ def derivative(f, x, order):
 
   # EDITION FOR FLATTENING AND RESHAPING gm AND gp INTERPOLATE FUNCTIONS
 
+# From Lars Du (end of thread): https://github.com/pytorch/pytorch/issues/1552
+
+def torch_1d_interp(
+    x: pt.Tensor,
+    xp: pt.Tensor,
+    fp: pt.Tensor,
+    left: float | None = None,
+    right: float | None = None,
+) -> pt.Tensor:
+
+    """
+    One-dimensional linear interpolation for monotonically increasing sample points.
+
+    Returns the one-dimensional piecewise linear interpolant to a function with given discrete data points (xp, fp), evaluated at x.
+
+    Args:
+        x: The x-coordinates at which to evaluate the interpolated values.
+        xp: 1d sequence of floats. x-coordinates. Must be increasing
+        fp: 1d sequence of floats. y-coordinates. Must be same length as xp
+        left: Value to return for x < xp[0], default is fp[0]
+        right: Value to return for x > xp[-1], default is fp[-1]
+
+    Returns:
+        The interpolated values, same shape as x.
+    """
+
+    # MY CHANGES
+
+    if not pt.is_tensor(fp):
+      print("Converting fp to tensor")
+      fp = pt.as_tensor(fp)    # Convert to tensor
+      # fp = fp.reshape(len(fp))    # TODO: Temporary fix, change this later
+    # fp = fp.expand(3,-1)
+    # fp = fp.reshape(len(fp))
+    # print("fp:", fp)
+
+    if not pt.is_tensor(xp):
+      print("Converting xp to tensor")
+      xp = pt.from_numpy(xp)    # Convert to tensor
+    # xp = xp.expand(3,-1)
+    # print("xp:", xp)
+
+    if not pt.is_tensor(x):
+      print("Converting x to tensor")
+      x = pt.as_tensor(x)    # Convert to tensor
+    # print("x:", x)
+
+    if left is None:
+        left = fp[0]
+
+    if right is None:
+        right = fp[-1]
+
+    i = pt.clip(pt.searchsorted(xp, x, right=True), 1, len(xp) - 1)
+
+    answer = pt.where(
+        x < xp[0],
+        left,
+        (fp[i - 1] * (xp[i] - x) + fp[i] * (x - xp[i - 1])) / (xp[i] - xp[i - 1]),
+    )
+    answer = pt.where(x > xp[-1], right, answer)
+    return answer
+
 # @jit(nopython=True)   # Throws error since numba can't recognize changes to derivative function
 def chiPT(
     f,

@@ -636,11 +636,10 @@ def fast_spectral_density_arbdist(
     # print("S(k,w) after normalization:", Skw)
 
     # Convert to np and return
-    alpha = pt.mean(alpha)
     alpha = alpha.detach().numpy()
     Skw = Skw.detach().numpy()
 
-    return alpha, Skw
+    return np.mean(alpha), Skw
 
 def spectral_density_arbdist(
     wavelengths: u.nm,

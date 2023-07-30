@@ -361,7 +361,7 @@ def chi(
     wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)
 
     # Coefficient
-    coefficient = -wpl2 / k ** 2 / (pt.sqrt(pt.tensor(2)) * v_th)
+    coefficient = -wpl2 / k ** 2 / (pt.sqrt(pt.tensor([2])) * v_th)
 
     # print("Coefficient:", coefficient)
 

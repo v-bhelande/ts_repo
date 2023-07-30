@@ -639,6 +639,9 @@ def fast_spectral_density_arbdist(
     alpha = alpha.detach().numpy()
     Skw = Skw.detach().numpy()
 
+    print("alpha:", alpha)
+    print("Skw:", Skw)
+
     return np.mean(alpha), Skw
 
 def spectral_density_arbdist(

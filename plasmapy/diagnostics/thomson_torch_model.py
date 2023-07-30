@@ -498,7 +498,7 @@ def fast_spectral_density_arbdist(
 
     # Compute the scattering parameter alpha
     # expressed here using the fact that v_th/w_p = root(2) * Debye length
-    alpha = pt.sqrt(pt.tensor(2)) * wpe / pt.outer(k, vTe)
+    alpha = pt.sqrt(pt.tensor([2])) * wpe / pt.outer(k, vTe)
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xie = (pt.outer(1 / vTe, 1 / k) * w_e) / pt.sqrt(pt.tensor([2]))

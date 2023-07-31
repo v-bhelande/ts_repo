@@ -265,7 +265,7 @@ def fast_spectral_density_arbdist(
     k_vec = scatter_vec - probe_vec
     k_vec = k_vec / np.linalg.norm(k_vec)  # normalization
 
-    print("k_vec:", k_vec)
+    # print("k_vec:", k_vec)
 
     # Compute drift velocities and thermal speeds for all electrons and ion species
     electron_vel = []  # drift velocities (vector)
@@ -286,9 +286,9 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = np.array(electron_vel_1d)
     vTe = np.array(vTe)
 
-    print("electron_vel:", electron_vel)
-    print("electron_vel_1d:", electron_vel_1d)
-    print("vTe:", vTe)
+    # print("electron_vel:", electron_vel)
+    # print("electron_vel_1d:", electron_vel_1d)
+    # print("vTe:", vTe)
 
     ion_vel = []
     ion_vel_1d = []
@@ -306,9 +306,9 @@ def fast_spectral_density_arbdist(
     ion_vel_1d = np.array(ion_vel_1d)
     vTi = np.array(vTi)
 
-    print("ion_vel:", ion_vel)
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
+    # print("ion_vel:", ion_vel)
+    # print("ion_vel_1d:", ion_vel_1d)
+    # print("vTi:", vTi)
 
     # Define some constants
     C = 299792458  # speed of light
@@ -322,7 +322,7 @@ def fast_spectral_density_arbdist(
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
 
     wpe = np.sqrt(n * 3182.60735)
-    print("wpe:", wpe)
+    # print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
@@ -331,7 +331,7 @@ def fast_spectral_density_arbdist(
 
     # Compute the frequency shift (required by energy conservation)
     w = ws - wl
-    print("w:", w)
+    # print("w:", w)
 
     # Compute the wavenumbers in the plasma
     # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
@@ -342,7 +342,7 @@ def fast_spectral_density_arbdist(
     scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
     # Eq. 1.7.10 in Sheffield
     k = np.sqrt(ks ** 2 + kl ** 2 - 2 * ks * kl * np.cos(scattering_angle))
-    print("k:", k)
+    # print("k:", k)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
@@ -382,7 +382,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
+    # print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -401,11 +401,11 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
+    # print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
-    print("epsilon:", epsilon)
+    # print("epsilon:", epsilon)
 
     # Electron component of Skw from Sheffield 5.1.2
     econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
@@ -422,7 +422,7 @@ def fast_spectral_density_arbdist(
                 efn[m],
             )
         )
-    print("econtr:", econtr)
+    # print("econtr:", econtr)
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -440,14 +440,13 @@ def fast_spectral_density_arbdist(
                 ifn[m],
             )
         )
-    print("icontr:", icontr)
+    # print("icontr:", icontr)
 
     # Recast as real: imaginary part is already zero
     Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))
 
     # Convert to power spectrum if option is enabled
     if scattered_power:
-        print("SCATTERED POWER")
         # Conversion factor
         Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2) 
         #this is to convert from S(frequency) to S(wavelength), there is an 
@@ -463,7 +462,7 @@ def fast_spectral_density_arbdist(
         x1 = np.argmin(np.abs(wavelengths - myNotch[1]))
         Skw[x0:x1] = 0
 
-    print("S(k,w) before normaliation:", Skw)
+    # print("S(k,w) before normaliation:", Skw)
 
     # Normalize result to have integral 1
     Skw = Skw / np.trapz(Skw, wavelengths)

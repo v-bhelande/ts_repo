@@ -369,7 +369,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
+    # print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -388,7 +388,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
+    # print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
@@ -452,7 +452,7 @@ def fast_spectral_density_arbdist(
     Skw = Skw / np.trapz(Skw, wavelengths)
 
     # print("alpha:", np.mean(alpha))
-    p# rint("Skw:", Skw)
+    # print("Skw:", Skw)
 
     return np.mean(alpha), Skw
     
@@ -1092,6 +1092,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         ion_z = ion_z,
         **settings,
     )
+
+    print("alpha:", alpha)
+    print("S(k,w):", model_Pw)
 
     # Put settings back now
     # this is necessary to avoid changing the settings array globally

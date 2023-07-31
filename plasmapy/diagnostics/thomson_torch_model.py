@@ -405,6 +405,8 @@ def fast_spectral_density_arbdist(
     k_vec = pt.tensor(scatter_vec - probe_vec)
     k_vec = k_vec / pt.linalg.norm(k_vec)  # normalization
 
+    print("k_vec:", k_vec)
+
     # Compute drift velocities and thermal speeds for all electrons and ion species
     electron_vel = pt.tensor([])  # drift velocities (vector)
     electron_vel_1d = pt.tensor([]) # 1D drift velocities (scalar)
@@ -421,9 +423,9 @@ def fast_spectral_density_arbdist(
         electron_vel_1d = pt.concatenate((electron_vel_1d, pt.tensor([bulk_velocity])))
         vTe = pt.concatenate((vTe, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
 
-    # print("electron_vel:", electron_vel)
-    # print("electron_vel_1d:", electron_vel_1d)
-    # print("vTe:", vTe)
+    print("electron_vel:", electron_vel)
+    print("electron_vel_1d:", electron_vel_1d)
+    print("vTe:", vTe)
 
     ion_vel = pt.tensor([])
     ion_vel_1d = pt.tensor([])
@@ -439,9 +441,9 @@ def fast_spectral_density_arbdist(
         ion_vel_1d = pt.concatenate((ion_vel_1d, pt.tensor([bulk_velocity])))
         vTi = pt.concatenate((vTi, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
 
-    # print("ion_vel:", ion_vel)
-    # print("ion_vel_1d:", ion_vel_1d)
-    # print("vTi:", vTi)
+    print("ion_vel:", ion_vel)
+    print("ion_vel_1d:", ion_vel_1d)
+    print("vTi:", vTi)
 
     # Define some constants
     C = pt.tensor([299792458], dtype = pt.float64)  # speed of light
@@ -455,7 +457,7 @@ def fast_spectral_density_arbdist(
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
     n = pt.tensor([n * 3182.60735], dtype = pt.float64)
     wpe = pt.sqrt(n)
-    # print("wpe:", wpe)
+    print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
@@ -467,7 +469,7 @@ def fast_spectral_density_arbdist(
 
     # Compute the frequency shift (required by energy conservation)
     w = pt.tensor(ws - wl)
-    # print("w:", w)
+    print("w:", w)
 
     # Compute the wavenumbers in the plasma
     # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
@@ -482,7 +484,7 @@ def fast_spectral_density_arbdist(
     scattering_angle = pt.arccos(pt.dot(probe_vec, scatter_vec))
     # Eq. 1.7.10 in Sheffield
     k = pt.sqrt((ks ** 2 + kl ** 2 - 2 * ks * kl * pt.cos(scattering_angle)))
-    # print("k:", k)
+    print("k:", k)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
@@ -529,7 +531,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiE:", chiE)
+    print("chiE:", chiE)
 
     # Ion susceptibilities
     chiI = pt.zeros((len(ifract), len(w)), dtype=pt.complex128)
@@ -548,11 +550,11 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiI:", chiI)
+    print("chiI:", chiI)
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + pt.sum(chiE, axis=0) + pt.sum(chiI, axis=0)
-    # print("epsilon:", epsilon)
+    print("epsilon:", epsilon)
 
     xie = pt.flatten(xie)
     longArgE = (e_velocity_axes - electron_vel_1d) / (pt.sqrt(pt.tensor(2)) * vTe)
@@ -577,7 +579,7 @@ def fast_spectral_density_arbdist(
             * eInterp[m]
             )
 
-    # print("econtr:", econtr)
+    print("econtr:", econtr)
 
     xii = pt.flatten(xii)
     longArgI = (i_velocity_axes - ion_vel_1d) / (pt.sqrt(pt.tensor(2)) * vTi)
@@ -604,7 +606,7 @@ def fast_spectral_density_arbdist(
             * iInterp[m]
         )
 
-    # print("icontr:", icontr)
+    print("icontr:", icontr)
 
     # Recast as real: imaginary part is already zero
     Skw = pt.real(pt.sum(econtr, axis=0) + pt.sum(icontr, axis=0))
@@ -616,8 +618,6 @@ def fast_spectral_density_arbdist(
         #this is to convert from S(frequency) to S(wavelength), there is an
         #extra 2 * pi * c here but that should be removed by normalization
 
-    # print("S(k,w) before normalization:", Skw)
-
     # Account for notch(es)
     for myNotch in notches:
         if len(myNotch) != 2:
@@ -626,6 +626,8 @@ def fast_spectral_density_arbdist(
         x0 = pt.argmin(pt.abs(wavelengths - myNotch[0]))
         x1 = pt.argmin(pt.abs(wavelengths - myNotch[1]))
         Skw[x0:x1] = 0
+
+    print("S(k,w) before normalization:", Skw)
 
     # Normalize result to have integral 1
     Skw = Skw / pt.trapz(Skw, wavelengths)

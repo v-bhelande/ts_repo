@@ -1328,11 +1328,13 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
 
     if "emodel" in settings:
         emodel = settings["emodel"]
+        print("emodel:", emodel)                # INSERTED PRINT STATEMENT HERE
     else:
         raise ValueError("Missing electron VDF model in settings")
 
     if "imodel" in settings:
         imodel = settings["imodel"]
+        print("imodel:", imodel)                # INSERTED PRINT STATEMENT HERE
     else:
         raise ValueError("Missing ion VDF model in settings")
     

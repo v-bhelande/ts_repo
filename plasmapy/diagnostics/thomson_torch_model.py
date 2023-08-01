@@ -1404,7 +1404,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
         imodel_param_names = set(inspect.getfullargspec(imodel[i])[0])
         if not ("v" in imodel_param_names):
             raise ValueError("Ion VDF model does not take velocity as input")
-        
+        print("imodel_param_names:", imodel_param_names)            # INSERTED PRINT STATEMENT HERE
         imodel_param_names.remove("v")
         iparam_names = set(iparams[i].keys())
         

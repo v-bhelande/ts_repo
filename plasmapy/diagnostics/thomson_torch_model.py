@@ -1246,8 +1246,8 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         **settings,
     )
 
-    print("alpha:", alpha)
-    print("S(k,w):", model_Pw)
+    # print("alpha:", alpha)
+    # print("S(k,w):", model_Pw)
 
     # Put settings back now
     # this is necessary to avoid changing the settings array globally

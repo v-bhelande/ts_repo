@@ -1059,6 +1059,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
     imodel = settings["imodel"]
+
+    # print("emodel:", emodel)
+    # print("imodel:", imodel)
     
     ifract = _params_to_array(params, "ifract")
     
@@ -1181,8 +1184,8 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         scattered_power=True,
     )
 
-    print("alpha:", alpha)
-    print("S(k,w):", model_Pw)
+    # print("alpha:", alpha)
+    # print("S(k,w):", model_Pw)
 
     return model_Pw
 
@@ -1272,6 +1275,7 @@ def scattered_power_model_arbdist(wavelengths, settings, params):
       
     for i in range(nSpecies):
         imodel_param_names = set(inspect.getfullargspec(imodel[i])[0])
+        # print("imodel_param_names:", imodel_param_names)     
         if not ("v" in imodel_param_names):
             raise ValueError("Ion VDF model does not take velocity as input")
         

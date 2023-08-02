@@ -310,6 +310,7 @@ def chi(
 
     return coefficient * integral
 
+# Changed args to tensors from lines 323-331
 def fast_spectral_density_arbdist(
     wavelengths,
     probe_wavelength,
@@ -319,16 +320,16 @@ def fast_spectral_density_arbdist(
     ifn,
     n,
     notches: u.nm = None,  
-    efract: np.ndarray = np.array([1.0]),
-    ifract: np.ndarray = np.array([1.0]),
-    ion_z=np.array([1]),
-    ion_m=np.array([1]),
-    probe_vec=np.array([1, 0, 0]),
-    scatter_vec=np.array([0, 1, 0]),
+    efract=pt.tensor([1.0]),        
+    ifract=pt.tensor([1.0]),
+    ion_z=pt.tensor([1]),
+    ion_m=pt.tensor([1]),
+    probe_vec=pt.tensor([1, 0, 0]),
+    scatter_vec=pt.tensor([0, 1, 0]),
     scattered_power=False,
-    inner_range=0.1,
-    inner_frac=0.8,
-) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
+    inner_range=pt.tensor([0.1])
+    inner_frac=pt.tensor([0.8]),
+) # -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
 
     # Ensure unit vectors are normalized
     probe_vec = probe_vec / pt.linalg.norm(probe_vec)

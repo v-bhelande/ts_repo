@@ -327,7 +327,7 @@ def fast_spectral_density_arbdist(
     probe_vec=pt.tensor([1, 0, 0]),
     scatter_vec=pt.tensor([0, 1, 0]),
     scattered_power=False,
-    inner_range=pt.tensor([0.1])
+    inner_range=pt.tensor([0.1]),
     inner_frac=pt.tensor([0.8]),
 ) # -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
 

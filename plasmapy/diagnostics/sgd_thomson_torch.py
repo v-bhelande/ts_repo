@@ -173,7 +173,7 @@ def torch_1d_interp(
     answer = torch.where(x > xp[-1], right, answer)
     return answer
 
-ddef chi(
+def chi(
     f,
     u_axis,
     k,

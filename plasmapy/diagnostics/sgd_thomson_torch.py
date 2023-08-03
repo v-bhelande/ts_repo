@@ -322,7 +322,7 @@ def fast_spectral_density_arbdist(
     efn,
     ifn,
     n,
-    notches: u.nm = None,
+    notches = None,
     efract = torch.tensor([1.0], dtype=torch.float64),
     ifract = torch.tensor([1.0], dtype=torch.float64),
     ion_z=torch.tensor([1], dtype=torch.float64),
@@ -580,8 +580,8 @@ def fast_spectral_density_arbdist(
     # Assume only 1 pair of notches (FOR NOW...)
     if len(notches) != 2:
             raise ValueError("Notches must be pairs of values")
-    x0 = torch.argmin(torch.abs(wavelengths - myNotch[0]))
-    x1 = torch.argmin(torch.abs(wavelengths - myNotch[1]))
+    x0 = torch.argmin(torch.abs(wavelengths - notches[0]))
+    x1 = torch.argmin(torch.abs(wavelengths - notches[1]))
     Skw[x0:x1] = 0
 
     """

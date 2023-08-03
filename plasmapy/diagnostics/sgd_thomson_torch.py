@@ -391,8 +391,7 @@ def fast_spectral_density_arbdist(
 
     # wpe is calculated for the entire plasma (all electron populations combined)
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
-    n = torch.tensor([n * 3182.60735], dtype = torch.float64)
-    wpe = torch.sqrt(n)
+    wpe = torch.sqrt(n * 3182.60735)
     # print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
@@ -420,11 +419,13 @@ def fast_spectral_density_arbdist(
     scattering_angle = torch.arccos(torch.dot(probe_vec, scatter_vec))
     # Eq. 1.7.10 in Sheffield
     k = torch.sqrt((ks ** 2 + kl ** 2 - 2 * ks * kl * torch.cos(scattering_angle)))
-    # print("k:", k)
+    print("k:", k)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
     # and ion components
+    print("k_vec:", k_vec)
+    print("torch.outer(k, k_vec).T:", torch.outer(k, k_vec).T)
     w_e = w -torch.matmul(electron_vel, torch.outer(k, k_vec).T)
     w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
 

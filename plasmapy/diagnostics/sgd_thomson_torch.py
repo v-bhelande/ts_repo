@@ -11,7 +11,7 @@ __all__ = [
 ]
 
 # Install torch dependencies
-import torch as pt
+import torch
 import torch.nn.functional as F
 
 import astropy.constants as const
@@ -39,7 +39,7 @@ def derivative(f, x, order):
     # print("dx:", dx)
 
     # Assumes f is 1D
-    finDiffMat = pt.zeros(len(f), len(f), dtype = pt.float64)
+    finDiffMat = torch.zeros(len(f), len(f), dtype = torch.float64)
 
     # Fill in finite difference matrix
 
@@ -80,7 +80,7 @@ def derivative(f, x, order):
 
         # print("finDiffMat:", finDiffMat)
 
-        f = (1./dx)*pt.matmul(finDiffMat, f)
+        f = (1./dx)*torch.matmul(finDiffMat, f)
         return f
       
     elif order == 2:
@@ -125,7 +125,7 @@ def derivative(f, x, order):
         # finDiffMat = finDiffMat.to_sparse()
         # print("finDiffMat:", finDiffMat)
 
-        f = (1./dx**2)*pt.matmul(finDiffMat, f)
+        f = (1./dx**2)*torch.matmul(finDiffMat, f)
         return f
     else:
         print("You can only choose an order of 1 or 2...")
@@ -133,12 +133,12 @@ def derivative(f, x, order):
 # Interpolation Function from Lars Du (end of thread): https://github.com/pytorch/pytorch/issues/1552
 
 def torch_1d_interp(
-    x: pt.Tensor,
-    xp: pt.Tensor,
-    fp: pt.Tensor,
+    x: torch.Tensor,
+    xp: torch.Tensor,
+    fp: torch.Tensor,
     left: float | None = None,
     right: float | None = None,
-) -> pt.Tensor:
+) -> torch.Tensor:
 
     """
     One-dimensional linear interpolation for monotonically increasing sample points.
@@ -162,15 +162,15 @@ def torch_1d_interp(
     if right is None:
         right = fp[-1]
 
-    i = pt.clip(pt.searchsorted(xp, x, right=True), 1, len(xp) - 1)
+    i = torch.clip(torch.searchsorted(xp, x, right=True), 1, len(xp) - 1)
 
-    answer = pt.where(
+    answer = torch.where(
         x < xp[0],
         left,
         (fp[i - 1] * (xp[i] - x) + fp[i] * (x - xp[i - 1])) / (xp[i] - xp[i - 1]),
     )
 
-    answer = pt.where(x > xp[-1], right, answer)
+    answer = torch.where(x > xp[-1], right, answer)
     return answer
 
 def chi(
@@ -216,24 +216,24 @@ def chi(
     # print("g' Interpolation:", gPrime)
 
     # Set up integration ranges and spacing
-    # We need fine divisions near the asymptote, but not at infinity
+    # We need fine divisions near the asymtorchote, but not at infinity
 
     """
-    #the fractional range of the inner fine divisions near the asymptote
+    #the fractional range of the inner fine divisions near the asymtorchote
     inner_range = 0.1
     #the fraction of total divisions used in the inner range; should be > inner_range
     inner_frac = 0.8
     """
 
-    outer_frac = pt.tensor(1.) - inner_frac
+    outer_frac = torch.tensor(1.) - inner_frac
 
-    m_inner = pt.linspace(0, inner_range, int(pt.floor(nPoints / 2 * inner_frac))) # Specify data type to pt.float64
-    p_inner = pt.linspace(0, inner_range, int(pt.ceil(nPoints / 2 * inner_frac)))
-    m_outer = pt.linspace(inner_range, 1, int(pt.floor(nPoints / 2 * outer_frac)))
-    p_outer = pt.linspace(inner_range, 1, int(pt.ceil(nPoints / 2 * outer_frac)))
+    m_inner = torch.linspace(0, inner_range, int(torch.floor(nPoints / 2 * inner_frac))) # Specify data type to torch.float64
+    p_inner = torch.linspace(0, inner_range, int(torch.ceil(nPoints / 2 * inner_frac)))
+    m_outer = torch.linspace(inner_range, 1, int(torch.floor(nPoints / 2 * outer_frac)))
+    p_outer = torch.linspace(inner_range, 1, int(torch.ceil(nPoints / 2 * outer_frac)))
 
-    m = pt.concatenate((m_inner, m_outer))
-    p = pt.concatenate((p_inner, p_outer))
+    m = torch.concatenate((m_inner, m_outer))
+    p = torch.concatenate((p_inner, p_outer))
 
     # print("m.size:", m.size())
     # print("m:", m)
@@ -241,9 +241,9 @@ def chi(
     # print("p:", p)
 
     # Generate integration sample points that avoid the singularity
-    # Create empty arrays of the correct size
-    zm = pt.zeros((len(xi), len(m)))            # TODO: Might have to rewrite this to extract length from Torch.Size
-    zp = pt.zeros((len(xi), len(p)))
+    # Create emtorchy arrays of the correct size
+    zm = torch.zeros((len(xi), len(m)))            # TODO: Might have to rewrite this to extract length from Torch.Size
+    zp = torch.zeros((len(xi), len(p)))
 
     # print("zm Shape:", zm.size())
     # print("zp Shape:", zp.size())
@@ -253,18 +253,18 @@ def chi(
     # print("deltauMax:", deltauMax)      # Loses degrees of precision once it becomes a tensor, why?
 
     # Compute arrays of offsets to add to the central points in xi
-    m_point_array = pt.tensor(phi + m * deltauMax)
+    m_point_array = torch.tensor(phi + m * deltauMax)
     # print("m_point_array:", m_point_array)
-    p_point_array = pt.tensor(phi + p * deltauMax)
+    p_point_array = torch.tensor(phi + p * deltauMax)
     # print("m_point_array:", m_point_array)
 
-    m_deltas = pt.concatenate((pt.tensor(pt.tensor(m_point_array[1:]) - pt.tensor(m_point_array[:-1])),
-                               pt.tensor([0.])))
+    m_deltas = torch.concatenate((torch.tensor(torch.tensor(m_point_array[1:]) - torch.tensor(m_point_array[:-1])),
+                               torch.tensor([0.])))
     # print("m_deltas shape:", m_deltas.size())
     # print("m_deltas:", m_deltas)
 
-    p_deltas = pt.concatenate((pt.tensor(pt.tensor(p_point_array[1:]) - pt.tensor(p_point_array[:-1])),
-                               pt.tensor([0.])))
+    p_deltas = torch.concatenate((torch.tensor(torch.tensor(p_point_array[1:]) - torch.tensor(p_point_array[:-1])),
+                               torch.tensor([0.])))
     # print("p_deltas shape:", p_deltas.size())
     # print("p_deltas:", p_deltas)
 
@@ -290,9 +290,9 @@ def chi(
     # print("M_array:", M_array)
 
     integral = (
-        pt.sum(M_array, axis=1)
-        - pt.sum(P_array, axis=1)
-        + 1j * pt.pi * g
+        torch.sum(M_array, axis=1)
+        - torch.sum(P_array, axis=1)
+        + 1j * torch.pi * g
         + 2 * phi * gPrime
     )
 
@@ -304,7 +304,7 @@ def chi(
     wpl2 = n * q_SI ** 2 / (m_SI * 8.8541878e-12)
 
     # Coefficient
-    coefficient = -wpl2 / k ** 2 / (pt.sqrt(pt.tensor(2)) * v_th)
+    coefficient = -wpl2 / k ** 2 / (torch.sqrt(torch.tensor(2)) * v_th)
 
     # print("Coefficient:", coefficient)
 
@@ -320,143 +320,143 @@ def fast_spectral_density_arbdist(
     ifn,
     n,
     notches: u.nm = None,  
-    efract=pt.tensor([1.0]),        
-    ifract=pt.tensor([1.0]),
-    ion_z=pt.tensor([1]),
-    ion_m=pt.tensor([1]),
-    probe_vec=pt.tensor([1, 0, 0]),
-    scatter_vec=pt.tensor([0, 1, 0]),
+    efract=torch.tensor([1.0]),        
+    ifract=torch.tensor([1.0]),
+    ion_z=torch.tensor([1]),
+    ion_m=torch.tensor([1]),
+    probe_vec=torch.tensor([1, 0, 0]),
+    scatter_vec=torch.tensor([0, 1, 0]),
     scattered_power=False,
-    inner_range=pt.tensor([0.1]),
-    inner_frac=pt.tensor([0.8]),
+    inner_range=torch.tensor([0.1]),
+    inner_frac=torch.tensor([0.8]),
 ): # -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
 
     # Ensure unit vectors are normalized
-    probe_vec = probe_vec / pt.linalg.norm(probe_vec)
-    scatter_vec = scatter_vec / pt.linalg.norm(scatter_vec)
+    probe_vec = probe_vec / torch.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
 
     # Normal vector along k, assume all velocities lie in this direction
-    k_vec = pt.tensor(scatter_vec - probe_vec)
-    k_vec = k_vec / pt.linalg.norm(k_vec)  # normalization
+    k_vec = torch.tensor(scatter_vec - probe_vec)
+    k_vec = k_vec / torch.linalg.norm(k_vec)  # normalization
 
     # print("k_vec:", k_vec)
 
     # Compute drift velocities and thermal speeds for all electrons and ion species
-    electron_vel = pt.tensor([])  # drift velocities (vector)
-    electron_vel_1d = pt.tensor([]) # 1D drift velocities (scalar)
-    vTe = pt.tensor([])  # thermal speeds (scalar)
+    electron_vel = torch.tensor([])  # drift velocities (vector)
+    electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
+    vTe = torch.tensor([])  # thermal speeds (scalar)
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
         v_axis = torch.tensor([v_axis], dtype=torch.float64)
-        moment1_integrand = pt.multiply(fn, v_axis)
-        bulk_velocity = pt.trapz(moment1_integrand, v_axis)       # Integrate along the given axis using the composite trapezoidal rule
-        moment2_integrand = pt.multiply(fn, pt.square(v_axis - bulk_velocity))
+        moment1_integrand = torch.multiply(fn, v_axis)
+        bulk_velocity = torch.trapz(moment1_integrand, v_axis)       # Integrate along the given axis using the composite trapezoidal rule
+        moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
-        electron_vel = pt.concatenate((electron_vel, bulk_velocity * k_vec / pt.linalg.norm(k_vec)))
-        electron_vel_1d = pt.concatenate((electron_vel_1d, pt.tensor([bulk_velocity])))
-        vTe = pt.concatenate((vTe, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
+        electron_vel = torch.concatenate((electron_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
+        electron_vel_1d = torch.concatenate((electron_vel_1d, torch.tensor([bulk_velocity])))
+        vTe = torch.concatenate((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
     # print("electron_vel:", electron_vel)
     # print("electron_vel_1d:", electron_vel_1d)
     # print("vTe:", vTe)
 
-    ion_vel = pt.tensor([])
-    ion_vel_1d = pt.tensor([])
-    vTi = pt.tensor([])
+    ion_vel = torch.tensor([])
+    ion_vel_1d = torch.tensor([])
+    vTi = torch.tensor([])
 
     for i, fn in enumerate(ifn):
         v_axis = i_velocity_axes[i]
         v_axis = torch.tensor([v_axis], dtype=torch.float64)
-        moment1_integrand = pt.multiply(fn, v_axis)
-        bulk_velocity = pt.trapz(moment1_integrand, v_axis)
-        moment2_integrand = pt.multiply(fn, pt.square(v_axis - bulk_velocity))
+        moment1_integrand = torch.multiply(fn, v_axis)
+        bulk_velocity = torch.trapz(moment1_integrand, v_axis)
+        moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
-        ion_vel = pt.concatenate((ion_vel, bulk_velocity * k_vec / pt.linalg.norm(k_vec)))
-        ion_vel_1d = pt.concatenate((ion_vel_1d, pt.tensor([bulk_velocity])))
-        vTi = pt.concatenate((vTi, pt.tensor([pt.sqrt(pt.trapz(moment2_integrand, v_axis))])))
+        ion_vel = torch.concatenate((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
+        ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
+        vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
     # print("ion_vel:", ion_vel)
     # print("ion_vel_1d:", ion_vel_1d)
     # print("vTi:", vTi)
 
     # Define some constants
-    C = pt.tensor([299792458], dtype = pt.float64)  # speed of light
+    C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 
     # Calculate plasma parameters
-    zbar = pt.sum(ifract * ion_z)     
+    zbar = torch.sum(ifract * ion_z)     
     ne = efract * n
     ni = ifract * n / zbar  # ne/zbar = sum(ni)
 
     # wpe is calculated for the entire plasma (all electron populations combined)
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
-    n = pt.tensor([n * 3182.60735], dtype = pt.float64)
-    wpe = pt.sqrt(n)
+    n = torch.tensor([n * 3182.60735], dtype = torch.float64)
+    wpe = torch.sqrt(n)
     # print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
-    ws = pt.tensor(2 * pt.pi * C / wavelengths)
-    wl = pt.tensor(2 * pt.pi * C / probe_wavelength)
+    ws = torch.tensor(2 * torch.pi * C / wavelengths)
+    wl = torch.tensor(2 * torch.pi * C / probe_wavelength)
 
     # print("ws:", ws)
     # print("wl:", wl)
 
     # Compute the frequency shift (required by energy conservation)
-    w = pt.tensor(ws - wl)
+    w = torch.tensor(ws - wl)
     # print("w:", w)
 
     # Compute the wavenumbers in the plasma
     # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
-    ks = pt.sqrt((ws ** 2 - wpe ** 2)) / C
+    ks = torch.sqrt((ws ** 2 - wpe ** 2)) / C
     # print("ws ** 2 - wpe ** 2:", ws ** 2 - wpe ** 2)
-    kl = pt.sqrt((wl ** 2 - wpe ** 2)) / C
+    kl = torch.sqrt((wl ** 2 - wpe ** 2)) / C
 
     # print("ks:", ks)
     # print("kl:", kl)
 
     # Compute the wavenumber shift (required by momentum conservation)
-    scattering_angle = pt.arccos(pt.dot(probe_vec, scatter_vec))
+    scattering_angle = torch.arccos(torch.dot(probe_vec, scatter_vec))
     # Eq. 1.7.10 in Sheffield
-    k = pt.sqrt((ks ** 2 + kl ** 2 - 2 * ks * kl * pt.cos(scattering_angle)))
+    k = torch.sqrt((ks ** 2 + kl ** 2 - 2 * ks * kl * torch.cos(scattering_angle)))
     # print("k:", k)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
     # and ion components
-    w_e = w -pt.matmul(electron_vel, pt.outer(k, k_vec).T)
-    w_i = w - pt.matmul(ion_vel, pt.outer(k, k_vec).T)
+    w_e = w -torch.matmul(electron_vel, torch.outer(k, k_vec).T)
+    w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
 
     # print("w_e:", w_e)
     # print("w_i:", w_i)
 
     # Compute the scattering parameter alpha
     # expressed here using the fact that v_th/w_p = root(2) * Debye length
-    alpha = pt.sqrt(pt.tensor(2)) * wpe / pt.outer(k, vTe)
+    alpha = torch.sqrt(torch.tensor(2)) * wpe / torch.outer(k, vTe)
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
-    xie = (pt.outer(1 / vTe, 1 / k) * w_e) / pt.sqrt(pt.tensor([2]))
-    xii = (pt.outer(1 / vTi, 1 / k) * w_i) / pt.sqrt(pt.tensor([2]))
+    xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2]))
+    xii = (torch.outer(1 / vTi, 1 / k) * w_i) / torch.sqrt(torch.tensor([2]))
 
-    # Calculate the susceptibilities
+    # Calculate the suscetorchibilities
     # Apply Sheffield (3.3.9) with the following substitutions
     # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-    # Electron susceptibilities
+    # Electron suscetorchibilities
     # print("efract.size():", efract.size())
     # print("efract.size():", len(efract))
     # print("w.size():", w.size())
     # print("w.size():", len(w))
-    chiE = pt.zeros((len(efract), len(w)), dtype=pt.complex128)
+    chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for i in range(len(efract)):
         chiE[i, :] = chi(
             f=efn[i],
             u_axis=(
                 e_velocity_axes[i] - electron_vel_1d[i]
             )
-            / (pt.sqrt(pt.tensor(2)) * vTe[i]),
+            / (torch.sqrt(torch.tensor(2)) * vTe[i]),
             k=k,
             xi=xie[i],
             v_th=vTe[i],
@@ -469,13 +469,13 @@ def fast_spectral_density_arbdist(
 
     # print("chiE:", chiE)
 
-    # Ion susceptibilities
-    chiI = pt.zeros((len(ifract), len(w)), dtype=pt.complex128)
+    # Ion suscetorchibilities
+    chiI = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for i in range(len(ifract)):
         chiI[i, :] = chi(
             f=ifn[i],
             u_axis=(i_velocity_axes[i] - ion_vel_1d[i])
-            / (pt.sqrt(pt.tensor(2)) * vTi[i]),
+            / (torch.sqrt(torch.tensor(2)) * vTi[i]),
             k=k,
             xi=xii[i],
             v_th=vTi[i],
@@ -489,65 +489,65 @@ def fast_spectral_density_arbdist(
     # print("chiI:", chiI)
 
     # Calculate the longitudinal dielectric function
-    epsilon = 1 + pt.sum(chiE, axis=0) + pt.sum(chiI, axis=0)
+    epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
     # print("epsilon:", epsilon)
 
-    xie = pt.flatten(xie)
-    longArgE = (e_velocity_axes - electron_vel_1d) / (pt.sqrt(pt.tensor(2)) * vTe)
-    longArgE = pt.flatten(longArgE)
-    efn = pt.flatten(efn)
+    xie = torch.flatten(xie)
+    longArgE = (e_velocity_axes - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
+    longArgE = torch.flatten(longArgE)
+    efn = torch.flatten(efn)
 
     eInterp = torch_1d_interp(xie, longArgE, efn)
     
     # Resize eInterp
-    eInterp = pt.reshape(eInterp, (1, len(eInterp)))
+    eInterp = torch.reshape(eInterp, (1, len(eInterp)))
     # print("eInterp:", eInterp)
 
     # Electron component of Skw from Sheffield 5.1.2
-    econtr = pt.zeros((len(efract), len(w)), dtype=pt.complex128)
+    econtr = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for m in range(len(efract)):
         # print("EFIOEFEWO:", longArgE[m])
         econtr[m] = efract[m] * (
             2
-            * pt.pi
+            * torch.pi
             / k
-            * pt.pow(pt.abs(1 - pt.sum(chiE, axis=0) / epsilon), 2)
+            * torch.pow(torch.abs(1 - torch.sum(chiE, axis=0) / epsilon), 2)
             * eInterp[m]
             )
 
     # print("econtr:", econtr)
 
-    xii = pt.flatten(xii)
-    longArgI = (i_velocity_axes - ion_vel_1d) / (pt.sqrt(pt.tensor(2)) * vTi)
-    longArgI = pt.flatten(longArgI)
-    ifn = pt.flatten(ifn)
+    xii = torch.flatten(xii)
+    longArgI = (i_velocity_axes - ion_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTi)
+    longArgI = torch.flatten(longArgI)
+    ifn = torch.flatten(ifn)
 
     iInterp = torch_1d_interp(xii, longArgI, ifn)
     
     # Resize eInterp
-    iInterp = pt.reshape(iInterp, (1, len(iInterp)))
+    iInterp = torch.reshape(iInterp, (1, len(iInterp)))
     # print("iInterp:", iInterp)
 
     # print("iInterp:", iInterp)
 
     # ion component
-    icontr = pt.zeros((len(ifract), len(w)), dtype=pt.complex128)
+    icontr = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for m in range(len(ifract)):
         icontr[m] = ifract[m] * (
             2
-            * pt.pi
+            * torch.pi
             * ion_z[m]
             / k
-            * pt.pow(pt.abs(pt.sum(chiE, axis=0) / epsilon), 2)
+            * torch.pow(torch.abs(torch.sum(chiE, axis=0) / epsilon), 2)
             * iInterp[m]
         )
 
     # print("icontr:", icontr)
 
     # Recast as real: imaginary part is already zero
-    Skw = pt.real(pt.sum(econtr, axis=0) + pt.sum(icontr, axis=0))
+    Skw = torch.real(torch.sum(econtr, axis=0) + torch.sum(icontr, axis=0))
 
-    # Convert to power spectrum if option is enabled
+    # Convert to power spectrum if otorchion is enabled
     if scattered_power:
         # Conversion factor
         Skw = Skw * (1 + 2 * w / wl) * 2 / (wavelengths ** 2)
@@ -559,14 +559,14 @@ def fast_spectral_density_arbdist(
         if len(myNotch) != 2:
             raise ValueError("Notches must be pairs of values")
 
-        x0 = pt.argmin(pt.abs(wavelengths - myNotch[0]))
-        x1 = pt.argmin(pt.abs(wavelengths - myNotch[1]))
+        x0 = torch.argmin(torch.abs(wavelengths - myNotch[0]))
+        x1 = torch.argmin(torch.abs(wavelengths - myNotch[1]))
         Skw[x0:x1] = 0
 
     # print("S(k,w) before normalization:", Skw)
 
     # Normalize result to have integral 1
-    Skw = Skw / pt.trapz(Skw, wavelengths)
+    Skw = Skw / torch.trapz(Skw, wavelengths)
 
     # print("alpha:", alpha)
     # print("S(k,w):", Skw)
@@ -742,7 +742,7 @@ def fast_spectral_density_maxwellian(
     xe = np.outer(1 / vTe, 1 / k) * w_e
     xi = np.outer(1 / vTi, 1 / k) * w_i
 
-    # Calculate the susceptibilities
+    # Calculate the suscetorchibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i, fract in enumerate(efract):
         wpe = fast_plasma_frequency(ne[i], 1, _m_e)
@@ -844,10 +844,10 @@ def spectral_density_maxwellian(
         \sum_i \frac{2\pi Z_i}{k}
         \bigg |\frac{\chi_e}{\epsilon} \bigg |^2 f_{i0,i}
         \bigg ( \frac{\omega}{k} \bigg )
-    where :math:`\chi_e` is the electron component susceptibility of the
+    where :math:`\chi_e` is the electron component suscetorchibility of the
     plasma and :math:`\epsilon = 1 + \sum_e \chi_e + \sum_i \chi_i` is the total
     plasma dielectric  function (with :math:`\chi_i` being the ion component
-    of the susceptibility), :math:`Z_i` is the charge of each ion, :math:`k`
+    of the suscetorchibility), :math:`Z_i` is the charge of each ion, :math:`k`
     is the scattering wavenumber, :math:`\omega` is the scattering frequency,
     and :math:`f_{e0,e}` and :math:`f_{i0,i}` are the electron and ion velocity
     distribution functions respectively. In this function the electron and ion
@@ -869,23 +869,23 @@ def spectral_density_maxwellian(
     Ti : `~astropy.units.Quantity`, shape (Ni, )
         Temperature of each ion component. Shape (Ni, ) must be equal to the
         number of ion populations Ni. (in K or convertible to eV)
-    efract : array_like, shape (Ne, ), optional
+    efract : array_like, shape (Ne, ), otorchional
         An array-like object where each element represents the fraction (or ratio)
         of the electron population number density to the total electron number density.
         Must sum to 1.0. Default is a single electron component.
-    ifract : array_like, shape (Ni, ), optional
+    ifract : array_like, shape (Ni, ), otorchional
         An array-like object where each element represents the fraction (or ratio)
         of the ion population number density to the total ion number density.
         Must sum to 1.0. Default is a single ion species.
-    ion_species : str or `~plasmapy.particles.Particle`, shape (Ni, ), optional
+    ion_species : str or `~plasmapy.particles.Particle`, shape (Ni, ), otorchional
         A list or single instance of `~plasmapy.particles.Particle`, or strings
         convertible to `~plasmapy.particles.Particle`. Default is ``'H+'``
         corresponding to a single species of hydrogen ions.
-    electron_vel : `~astropy.units.Quantity`, shape (Ne, 3), optional
+    electron_vel : `~astropy.units.Quantity`, shape (Ne, 3), otorchional
         Velocity of each electron population in the rest frame. (convertible to m/s)
         If set, overrides electron_vdir and electron_speed.
         Defaults to a stationary plasma [0, 0, 0] m/s.
-    ion_vel : `~astropy.units.Quantity`, shape (Ni, 3), optional
+    ion_vel : `~astropy.units.Quantity`, shape (Ni, 3), otorchional
         Velocity vectors for each electron population in the rest frame
         (convertible to m/s). If set, overrides ion_vdir and ion_speed.
         Defaults zero drift for all specified ion species.
@@ -915,7 +915,7 @@ def spectral_density_maxwellian(
     For details, see "Plasma Scattering of Electromagnetic Radiation" by
     Sheffield et al. `ISBN 978\\-0123748775`_. This code is a modified version
     of the program described therein.
-    For a concise summary of the relevant physics, see Chapter 5 of Derek
+    For a concise summary of the relevant physics, see Chatorcher 5 of Derek
     Schaeffer's thesis, DOI: `10.5281/zenodo.3766933`_.
     .. _`ISBN 978\\-0123748775`: https://www.sciencedirect.com/book/9780123748775/plasma-scattering-of-electromagnetic-radiation
     .. _`10.5281/zenodo.3766933`: https://doi.org/10.5281/zenodo.3766933
@@ -1042,7 +1042,7 @@ def spectral_density_maxwellian(
 # ***************************************************************************
 
 
-def _count_populations_in_params(params, prefix, allow_empty = False):
+def _count_populations_in_params(params, prefix, allow_emtorchy = False):
     """
     Counts the number of entries matching the pattern prefix_i in a
     list of keys
@@ -1051,7 +1051,7 @@ def _count_populations_in_params(params, prefix, allow_empty = False):
     keys = list(params.keys())
     prefixLength = len(prefix)
     
-    if allow_empty:
+    if allow_emtorchy:
         nParams = 0
         for myKey in keys:
             if myKey[:prefixLength] == prefix:
@@ -1063,7 +1063,7 @@ def _count_populations_in_params(params, prefix, allow_empty = False):
         return len(re.findall(prefix, ",".join(keys)))
 
 
-def _params_to_array(params, prefix, vector=False, allow_empty = False):
+def _params_to_array(params, prefix, vector=False, allow_emtorchy = False):
     """
     Takes a list of parameters and returns an array of the values corresponding
     to a key, based on the following naming convention:
@@ -1074,7 +1074,7 @@ def _params_to_array(params, prefix, vector=False, allow_empty = False):
     """
 
     if vector:
-        npop = _count_populations_in_params(params, prefix + "_x", allow_empty = allow_empty)
+        npop = _count_populations_in_params(params, prefix + "_x", allow_emtorchy = allow_emtorchy)
         output = np.zeros([npop, 3])
         for i in range(npop):
             for j, ax in enumerate(["x", "y", "z"]):
@@ -1084,7 +1084,7 @@ def _params_to_array(params, prefix, vector=False, allow_empty = False):
                     output[i, j] = None
 
     else:
-        npop = _count_populations_in_params(params, prefix, allow_empty = allow_empty)
+        npop = _count_populations_in_params(params, prefix, allow_emtorchy = allow_emtorchy)
         output = np.zeros([npop])
         for i in range(npop):
             if prefix + f"_{i}" in params:
@@ -1166,7 +1166,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Call scattered power function
     alpha, model_Pw = fast_spectral_density_arbdist(
         wavelengths=wavelengths,
-        n=n * 1e6, #this is so it accepts cm^-3 values by default
+        n=n * 1e6, #this is so it accetorchs cm^-3 values by default
         efn=fe,
         ifn=fi,
         scattered_power=True,
@@ -1189,7 +1189,7 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
 def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
     """
     lmfit Model function for fitting Thomson spectra
-    For descriptions of arguments, see the `thomson_model` function.
+    For descritorchions of arguments, see the `thomson_model` function.
     """
 
     wavelengths_unitless = wavelengths.to(u.m).value
@@ -1383,7 +1383,7 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
             - probe_vec : (3,) unit vector in the probe direction
             - scatter_vec: (3,) unit vector in the scattering direction
             - ion_species : list of Particle strings describing each ion species
-        and may contain the following optional variables
+        and may contain the following otorchional variables
             - electron_vdir : (e#, 3) array of electron velocity unit vectors
             - ion_vdir : (e#, 3) array of ion velocity unit vectors
             - inst_fcn : A function that takes a wavelength array and represents
@@ -1394,17 +1394,17 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
             - n: 0th order density in cm^-3
             - Te_e# : Temperature in eV
             - Ti_i# : Temperature in eV
-        and may contain the following optional variables
-            - efract_e# : Fraction of each electron population (must sum to 1) (optional)
-            - ifract_i# : Fraction of each ion population (must sum to 1) (optional)
-            - electron_speed_e# : Electron speed in m/s (optional)
-            - ion_speed_i# : Ion speed in m/s (optional)
+        and may contain the following otorchional variables
+            - efract_e# : Fraction of each electron population (must sum to 1) (otorchional)
+            - ifract_i# : Fraction of each ion population (must sum to 1) (otorchional)
+            - electron_speed_e# : Electron speed in m/s (otorchional)
+            - ion_speed_i# : Ion speed in m/s (otorchional)
         where i# and e# are the number of electron and ion populations,
         zero-indexed, respectively (eg. 0,1,2...).
         These quantities can be either fixed or varying.
     Returns
     -------
-    Spectral density (optimization function)
+    Spectral density (otorchimization function)
     """
 
     # **********************
@@ -1538,7 +1538,7 @@ def scattered_power_model_maxwellian(wavelengths, settings, params):
         if hasattr(settings[k], "unit"):
             settings[k] = settings[k].to(unit).value
 
-    # TODO: raise an exception if the number of any of the ion or electron
+    # TODO: raise an excetorchion if the number of any of the ion or electron
     # quantities isn't consistent with the number of that species defined
     # by ifract or efract.
 

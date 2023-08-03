@@ -577,6 +577,9 @@ def fast_spectral_density_arbdist(
     # Cheat by converting notches tensor to array (Ask Mark for fix)
     # notches = notches.numpy()
 
+    print("notches:", notches)
+    print("length:", len(notches))
+
     # Assume only 1 pair of notches (FOR NOW...)
     if len(notches) != 2:
             raise ValueError("Notches must be pairs of values")

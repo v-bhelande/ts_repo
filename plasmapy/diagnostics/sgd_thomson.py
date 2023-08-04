@@ -971,7 +971,7 @@ def spectral_density_maxwellian(
     )
 
     # Convert results to tensors
-    alpha = torch.from_numpy(alpha)
+    alpha = torch.as_tensor(alpha)
     Skw = torch.from_numpy(Skw)
 
     print("S(k,w):", Skw * u.s / u.rad)

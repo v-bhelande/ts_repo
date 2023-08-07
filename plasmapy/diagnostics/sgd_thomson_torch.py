@@ -746,6 +746,8 @@ def fast_spectral_density_maxwellian(
     vTi = fast_thermal_speed(Ti, ion_m * _m_p)
     zbar = np.sum(ifract * ion_z)
 
+    print("Spectral density n:", n)        # INSERTED PRINT STATEMENT HERE
+
     # Compute electron and ion densities
     ne = efract * n
     ni = ifract * n / zbar  # ne/zbar = sum(ni)

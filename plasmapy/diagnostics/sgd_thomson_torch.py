@@ -1083,7 +1083,11 @@ def spectral_density_maxwellian(
         scattered_power=scattered_power,
     )
 
-    return alpha, Skw * u.s / u.rad
+    # Return output as PyTorch tensors
+    alpha = torch.from_numpy(alpha)
+    Skw = torch.from_numpy(Skw)
+
+    return torch.mean(alpha), Skw # * u.s / u.rad
 
 
 # ***************************************************************************

@@ -577,15 +577,27 @@ def fast_spectral_density_arbdist(
     # Cheat by converting notches tensor to array (Ask Mark for fix)
     # notches = notches.numpy()
 
-    print("notches:", notches)
-    print("length:", len(notches))
+    # print("notches:", notches)
+    # print("length:", len(notches))
 
+    # Account for notch(es) in differentiable manner
+    bools = torch.ones(len(Skw), dtype = torch.bool)
+    for i, j in (notches):
+        if len(notches) != 2:
+            raise ValueError("Notches must be pairs of values")
+        x0 = torch.argmin(torch.abs(wavelengths - notches[i]))
+        x1 = torch.argmin(torch.abs(wavelengths - notches[j]))
+        bools[x0:x1] = False
+    Skw = torch.mul(Skw, bools)
+
+    """
     # Assume only 1 pair of notches (FOR NOW...)
     if len(notches) != 2:
             raise ValueError("Notches must be pairs of values")
     x0 = torch.argmin(torch.abs(wavelengths - notches[0]))
     x1 = torch.argmin(torch.abs(wavelengths - notches[1]))
     Skw[x0:x1] = 0
+    """
 
     """
     # Account for notch(es)

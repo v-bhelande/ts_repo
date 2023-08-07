@@ -1084,8 +1084,8 @@ def spectral_density_maxwellian(
     )
 
     # Return output as PyTorch tensors
-    alpha = torch.from_numpy(alpha)
-    Skw = torch.from_numpy(Skw)
+    alpha = torch.as_tensor(alpha)
+    Skw = torch.as_tensor(Skw)
 
     return torch.mean(alpha), Skw # * u.s / u.rad
 

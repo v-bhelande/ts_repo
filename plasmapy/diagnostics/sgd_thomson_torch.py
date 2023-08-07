@@ -740,8 +740,8 @@ def fast_spectral_density_maxwellian(
 
     scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
 
-    print("Maxwell wavelengths:", wavelengths)    # INSERTED PRINT STATEMENT HERE
-    print("Maxwell temps:", Te)
+    # print("Maxwell wavelengths:", wavelengths)    # INSERTED PRINT STATEMENT HERE
+    # print("Maxwell temps:", Te)
 
     # Calculate plasma parameters
     # Temperatures here in K!
@@ -749,7 +749,7 @@ def fast_spectral_density_maxwellian(
     vTi = fast_thermal_speed(Ti, ion_m * _m_p)
     zbar = np.sum(ifract * ion_z)
 
-    print("Spectral density n:", n)        # INSERTED PRINT STATEMENT HERE
+    # print("Spectral density n:", n)        # INSERTED PRINT STATEMENT HERE
 
     # Compute electron and ion densities
     ne = efract * n
@@ -1086,6 +1086,8 @@ def spectral_density_maxwellian(
     # Return output as PyTorch tensors
     alpha = torch.as_tensor(alpha)
     Skw = torch.as_tensor(Skw)
+
+    print("Maxwellian S(k,w):", Skw)
 
     return torch.mean(alpha), Skw # * u.s / u.rad
 

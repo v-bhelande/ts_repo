@@ -740,6 +740,9 @@ def fast_spectral_density_maxwellian(
 
     scattering_angle = np.arccos(np.dot(probe_vec, scatter_vec))
 
+    print("Maxwell wavelengths:", wavelengths)    # INSERTED PRINT STATEMENT HERE
+    print("Maxwell temps:", Te)
+
     # Calculate plasma parameters
     # Temperatures here in K!
     vTe = fast_thermal_speed(Te, _m_e)

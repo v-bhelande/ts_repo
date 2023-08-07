@@ -583,7 +583,7 @@ def fast_spectral_density_arbdist(
     # Account for notch(es) in differentiable manner
     bools = torch.ones(len(Skw), dtype = torch.bool)
     for i, j in enumerate(notches):
-        if len(notches) != 2:
+        if len(j) != 2:
             raise ValueError("Notches must be pairs of values")
         x0 = torch.argmin(torch.abs(wavelengths - j[0]))
         x1 = torch.argmin(torch.abs(wavelengths - j[-1]))

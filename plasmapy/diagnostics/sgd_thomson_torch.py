@@ -580,15 +580,17 @@ def fast_spectral_density_arbdist(
     # print("notches:", notches)
     # print("length:", len(notches))
 
-    # Account for notch(es) in differentiable manner
-    bools = torch.ones(len(Skw), dtype = torch.bool)
-    for i, j in enumerate(notches):
-        if len(j) != 2:
-            raise ValueError("Notches must be pairs of values")
-        x0 = torch.argmin(torch.abs(wavelengths - j[0]))
-        x1 = torch.argmin(torch.abs(wavelengths - j[-1]))
-        bools[x0:x1] = False
-    Skw = torch.mul(Skw, bools)
+    # Work under assumption only EPW wavelengths require notch(es)
+    if wavelengths == "epw_wavelengths_TORCH":
+        # Account for notch(es) in differentiable manner
+        bools = torch.ones(len(Skw), dtype = torch.bool)
+        for i, j in enumerate(notches):
+            if len(j) != 2:
+                raise ValueError("Notches must be pairs of values")
+            x0 = torch.argmin(torch.abs(wavelengths - j[0]))
+            x1 = torch.argmin(torch.abs(wavelengths - j[-1]))
+            bools[x0:x1] = False
+        Skw = torch.mul(Skw, bools)
 
     """
     # Assume only 1 pair of notches (FOR NOW...)

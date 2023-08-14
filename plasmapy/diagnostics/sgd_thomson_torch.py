@@ -594,7 +594,9 @@ def fast_spectral_density_arbdist(
 
 
     # Work under assumption only EPW wavelengths require notch(es)
-    if wavelengths == epw_wavelengths_TORCH:
+    if notches == None:    # Enable IAW to skip notches
+        continue
+    else:
         # Account for notch(es) in differentiable manner
         bools = torch.ones(len(Skw), dtype = torch.bool)
         for i, j in enumerate(notches):

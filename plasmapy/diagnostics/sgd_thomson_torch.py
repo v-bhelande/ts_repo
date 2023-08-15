@@ -629,7 +629,7 @@ def fast_spectral_density_arbdist(
     # Normalize result to have integral 1
     Skw = Skw / torch.trapz(Skw, wavelengths)
 
-    print("S(k,w) after normalization:", Skw)
+    # print("S(k,w) after normalization:", Skw)
 
     return torch.mean(alpha), Skw
 

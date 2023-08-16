@@ -358,7 +358,7 @@ def fast_spectral_density_arbdist(
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
-        moment1_integrand = torch.multiply(fn, e_velocity_axes)
+        moment1_integrand = torch.multiply(fn, v_axis)         # CHANGE BACK TO (fn, e_velocity_axes) IF IT FAILS
         # print("moment1_integrand:", moment1_integrand)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)       # Integrate along the given axis using the composite trapezoidal rule
         # print("bulk_velocity:", bulk_velocity)
@@ -382,7 +382,7 @@ def fast_spectral_density_arbdist(
 
     for i, fn in enumerate(ifn):
         v_axis = i_velocity_axes[i]
-        moment1_integrand = torch.multiply(fn, v_axis)
+        moment1_integrand = torch.multiply(fn, v_axis)        # CHANGE BACK TO (fn, v_axis) IF IT FAILS
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 

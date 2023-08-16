@@ -543,7 +543,7 @@ def fast_spectral_density_arbdist(
     iInterp = torch_1d_interp(xii, longArgI, ifn)
 
     # Resize eInterp
-    inspeciInterp = torch.reshape(iInterp, (1, len(iInterp)))
+    iInterp = torch.reshape(iInterp, (1, len(iInterp)))
     # print("iInterp:", iInterp)
 
     # print("iInterp:", iInterp)

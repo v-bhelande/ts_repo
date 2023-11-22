@@ -204,17 +204,13 @@ def chi(
 
     # Take f' = df/du and f" = d^2f/d^2u
     fPrime = derivative(f=f, x=u_axis, order=1)
-    # print("fPrime:", fPrime)
 
     fDoublePrime = derivative(f=f, x=u_axis, order=2)
-    # print("fDoublePrime:", fDoublePrime)
 
     # Interpolate f' and f" onto xi
     g = torch_1d_interp(xi, u_axis, fPrime)
-    # print("g Interpolation:", g)
 
     gPrime = torch_1d_interp(xi, u_axis, fDoublePrime)
-    # print("g' Interpolation:", gPrime)
 
     # Set up integration ranges and spacing
     # We need fine divisions near the asymtorchote, but not at infinity
@@ -228,7 +224,7 @@ def chi(
 
     outer_frac = torch.tensor(1.) - inner_frac
 
-    m_inner = torch.linspace(0, inner_range, int(torch.floor(torch.tensor([nPoints / 2 * inner_frac])))) # Specify data type to torch.float64
+    m_inner = torch.linspace(0, inner_range, int(torch.floor(torch.tensor([nPoints / 2 * inner_frac]))))
     p_inner = torch.linspace(0, inner_range, int(torch.ceil(torch.tensor([nPoints / 2 * inner_frac]))))
     m_outer = torch.linspace(inner_range, 1, int(torch.floor(torch.tensor([nPoints / 2 * outer_frac]))))
     p_outer = torch.linspace(inner_range, 1, int(torch.ceil(torch.tensor([nPoints / 2 * outer_frac]))))
@@ -236,38 +232,24 @@ def chi(
     m = torch.concatenate((m_inner, m_outer))
     p = torch.concatenate((p_inner, p_outer))
 
-    # print("m.size:", m.size())
-    # print("m:", m)
-    # print("p.size:", p.size())
-    # print("p:", p)
-
     # Generate integration sample points that avoid the singularity
     # Create empty arrays of the correct size
-    zm = torch.zeros((len(xi), len(m)))            # TODO: Might have to rewrite this to extract length from Torch.Size
+    zm = torch.zeros((len(xi), len(m)))
     zp = torch.zeros((len(xi), len(p)))
-
-    # print("zm Shape:", zm.size())
-    # print("zp Shape:", zp.size())
-
+    
     # Compute maximum width of integration range based on the size of the input array of normalized velocities
     deltauMax = max(u_axis) - min(u_axis)
     # print("deltauMax:", deltauMax)
 
     # Compute arrays of offsets to add to the central points in xi
     m_point_array = torch.tensor(phi + m * deltauMax)
-    # print("m_point_array:", m_point_array)
     p_point_array = torch.tensor(phi + p * deltauMax)
-    # print("m_point_array:", m_point_array)
 
     m_deltas = torch.concatenate((torch.tensor(torch.tensor(m_point_array[1:]) - torch.tensor(m_point_array[:-1])),
                                torch.tensor([0.])))
-    # print("m_deltas shape:", m_deltas.size())
-    # print("m_deltas:", m_deltas)
 
     p_deltas = torch.concatenate((torch.tensor(torch.tensor(p_point_array[1:]) - torch.tensor(p_point_array[:-1])),
                                torch.tensor([0.])))
-    # print("p_deltas shape:", p_deltas.size())
-    # print("p_deltas:", p_deltas)
 
     # The integration points on u
     for i in range(len(xi)):
@@ -276,15 +258,10 @@ def chi(
 
     gm = torch_1d_interp(zm, u_axis, fPrime)
     gp = torch_1d_interp(zp, u_axis, fPrime)
-
-    # print("gm Interpolation:", gm)
-    # print("gp Interpolation:", gp)
-
+    
     # Evaluate integral (df/du / (u - xi)) du
     M_array = m_deltas * gm / m_point_array
-    # print("M_array:", M_array)
     P_array = p_deltas * gp / p_point_array
-    # print("P_array:", P_array)
 
     integral = (
         torch.sum(M_array, axis=1)
@@ -292,27 +269,18 @@ def chi(
         + 1j * torch.pi * g
         + 2 * phi * gPrime
     )
-    # print("integral:", integral)
 
     # Convert mass and charge to SI units
     m_SI = torch.tensor([particle_m * 1.6605e-27])
     q_SI = torch.tensor([particle_q * 1.6022e-19])
     
     # Compute plasma frequency squared
-    """
-    print("q_SI ** 2:", torch.square(q_SI))
-    print("m_SI:", m_SI * 8.8541878e-12)
-    print("n:", n)
-    """
     wpl2 = n * torch.square(q_SI) / (m_SI * 8.8541878e-12)
-    # print("wpl2:", wpl2)
 
     # Coefficient
     v_th = torch.tensor([v_th])
     coefficient = -1. * wpl2 / k ** 2 / (torch.sqrt(torch.tensor([2])) * v_th)
-
-    # print("Coefficient:", coefficient)
-
+    
     return coefficient * integral
 
 def fast_spectral_density_arbdist(
@@ -333,10 +301,7 @@ def fast_spectral_density_arbdist(
     scattered_power=True,
     inner_range=0.1,
     inner_frac=0.8,
-): # -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
-
-    # Convert wavelengths to tensors just in case
-    # wavelengths = torch.tensor([wavelengths], dtype=torch.float64)
+):
 
     # Ensure unit vectors are normalized
     probe_vec = probe_vec / torch.linalg.norm(probe_vec)
@@ -351,28 +316,19 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
     vTe = torch.tensor([])  # thermal speeds (scalar)
 
-    # RESHAPE TO MATCH SIZED FOR SOME REASON (LOOK INTO THIS!!!)
     e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))
     efn = torch.reshape(efn, (1, len(efn)))
-    # print("efn:", efn)
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
-        moment1_integrand = torch.multiply(fn, v_axis)         # CHANGE BACK TO (fn, e_velocity_axes) IF IT FAILS
-        # print("moment1_integrand:", moment1_integrand)
-        bulk_velocity = torch.trapz(moment1_integrand, v_axis)       # Integrate along the given axis using the composite trapezoidal rule
-        # print("bulk_velocity:", bulk_velocity)
+        moment1_integrand = torch.multiply(fn, v_axis)
+        bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
-        # print("moment2_integrand:", moment2_integrand)
 
         electron_vel = torch.concatenate((electron_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
         electron_vel_1d = torch.concatenate((electron_vel_1d, torch.tensor([bulk_velocity])))
         vTe = torch.concatenate((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
-
-    # print("electron_vel:", electron_vel)
-    # print("electron_vel_1d:", electron_vel_1d)
-    # print("vTe:", vTe)
 
     ion_vel = torch.tensor([])
     ion_vel_1d = torch.tensor([])
@@ -383,7 +339,7 @@ def fast_spectral_density_arbdist(
 
     for i, fn in enumerate(ifn):
         v_axis = i_velocity_axes[i]
-        moment1_integrand = torch.multiply(fn, v_axis)        # CHANGE BACK TO (fn, v_axis) IF IT FAILS
+        moment1_integrand = torch.multiply(fn, v_axis)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
@@ -391,15 +347,11 @@ def fast_spectral_density_arbdist(
         ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
-    # print("ion_vel:", ion_vel)
-    # print("ion_vel_1d:", ion_vel_1d)
-    # print("vTi:", vTi)
-
     # Define some constants
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 
     # Calculate plasma parameters
-    zbar = torch.sum(ifract * ion_z)       # What is zbar?
+    zbar = torch.sum(ifract * ion_z)
     ne = efract * n
     ni = ifract * n / zbar  # ne/zbar = sum(ni)
 
@@ -407,52 +359,35 @@ def fast_spectral_density_arbdist(
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
     n = torch.tensor(n * 3182.60735, dtype = torch.float64)
     wpe = torch.sqrt(n)
-    # print("wpe:", wpe)
 
     # Convert wavelengths to angular frequencies (electromagnetic waves, so
     # phase speed is c)
     ws = torch.tensor(2 * torch.pi * C / wavelengths)
     wl = torch.tensor(2 * torch.pi * C / probe_wavelength)
 
-    # print("ws:", ws)
-    # print("wl:", wl)
-
     # Compute the frequency shift (required by energy conservation)
     w = torch.tensor(ws - wl)
-    # print("w:", w)
-
+    
     # Compute the wavenumbers in the plasma
     # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
     ks = torch.sqrt((torch.square(ws) - torch.square(wpe))) / C
-    # print("ws ** 2 - wpe ** 2:", ws ** 2 - wpe ** 2)
     kl = torch.sqrt((torch.square(wl) - torch.square(wpe))) / C
-
-    # print("ks:", ks)
-    # print("kl:", kl)
 
     # Compute the wavenumber shift (required by momentum conservation)
     scattering_angle = torch.arccos(torch.dot(probe_vec, scatter_vec))
     # Eq. 1.7.10 in Sheffield
     k = torch.sqrt((torch.square(ks) + torch.square(kl) - 2 * ks * kl * torch.cos(scattering_angle)))
-    # print("k:", k)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
     # and ion components
 
-    # print("electron_vel:", electron_vel)
-    # print("torch.outer(k, k_vec):", torch.outer(k, k_vec))
-    # print("torch.outer(k, k_vec).T:", torch.outer(k, k_vec).T)
     w_e = w -torch.matmul(electron_vel, torch.outer(k, k_vec).T)
     w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
-
-    # print("w_e:", w_e)
-    # print("w_i:", w_i)
 
     # Compute the scattering parameter alpha
     # expressed here using the fact that v_th/w_p = root(2) * Debye length
     alpha = torch.sqrt(torch.tensor([2])) * wpe / torch.outer(k, vTe)
-    # print("alpha:", alpha)
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2]))
@@ -464,10 +399,6 @@ def fast_spectral_density_arbdist(
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
     # Electron susceptibilities
-    # print("efract.size():", efract.size())
-    # print("efract.size():", len(efract))
-    # print("w.size():", w.size())
-    # print("w.size():", len(w))
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for i in range(len(efract)):
         chiE[i, :] = chi(
@@ -486,8 +417,6 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiE:", chiE)
-
     # Ion susceptibilities
     chiI = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for i in range(len(ifract)):
@@ -505,11 +434,8 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiI:", chiI)
-
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
-    # print("epsilon:", epsilon)
 
     xie = torch.flatten(xie)
     longArgE = (e_velocity_axes - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
@@ -520,12 +446,10 @@ def fast_spectral_density_arbdist(
 
     # Resize eInterp
     eInterp = torch.reshape(eInterp, (1, len(eInterp)))
-    # print("eInterp:", eInterp)
 
     # Electron component of Skw from Sheffield 5.1.2
     econtr = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for m in range(len(efract)):
-        # print("EFIOEFEWO:", longArgE[m])
         econtr[m] = efract[m] * (
             2
             * torch.pi
@@ -533,8 +457,6 @@ def fast_spectral_density_arbdist(
             * torch.pow(torch.abs(1 - torch.sum(chiE, axis=0) / epsilon), 2)
             * eInterp[m]
             )
-
-    # print("econtr:", econtr)
 
     xii = torch.flatten(xii)
     longArgI = (i_velocity_axes - ion_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTi)
@@ -545,9 +467,6 @@ def fast_spectral_density_arbdist(
 
     # Resize iInterp
     iInterp = torch.reshape(iInterp, (1, len(iInterp)))
-    # print("iInterp:", iInterp)
-
-    # print("iInterp:", iInterp)
 
     # ion component
     icontr = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
@@ -560,8 +479,6 @@ def fast_spectral_density_arbdist(
             * torch.pow(torch.abs(torch.sum(chiE, axis=0) / epsilon), 2)
             * iInterp[m]
         )
-
-    # print("icontr:", icontr)
 
     # Recast as real: imaginary part is already zero
     Skw = torch.real(torch.sum(econtr, axis=0) + torch.sum(icontr, axis=0))
@@ -581,19 +498,6 @@ def fast_spectral_density_arbdist(
     # print("notches:", notches)
     # print("length:", len(notches))
 
-    """
-    # Account for notch(es) in differentiable manner
-    bools = torch.ones(len(Skw), dtype = torch.bool)
-    for i, j in enumerate(notches):
-        if len(j) != 2:
-            raise ValueError("Notches must be pairs of values")
-        x0 = torch.argmin(torch.abs(wavelengths - j[0]))
-        x1 = torch.argmin(torch.abs(wavelengths - j[-1]))
-        bools[x0:x1] = False
-    Skw = torch.mul(Skw, bools)
-    """
-
-
     # Work under assumption only EPW wavelengths require notch(es)
     if notches != None:
         # Account for notch(es) in differentiable manner
@@ -605,28 +509,7 @@ def fast_spectral_density_arbdist(
             x1 = torch.argmin(torch.abs(wavelengths - j[-1]))
             bools[x0:x1] = False
         Skw = torch.mul(Skw, bools)
-    
-    """
-    # Assume only 1 pair of notches (FOR NOW...)
-    if len(notches) != 2:
-            raise ValueError("Notches must be pairs of values")
-    x0 = torch.argmin(torch.abs(wavelengths - notches[0]))
-    x1 = torch.argmin(torch.abs(wavelengths - notches[1]))
-    Skw[x0:x1] = 0
-    """
 
-    """
-    # Account for notch(es)
-    for myNotch in notches:
-        print("myNotch:", myNotch)
-        if len(myNotch) != 2:
-            raise ValueError("Notches must be pairs of values")
-
-        x0 = torch.argmin(torch.abs(wavelengths - myNotch[0]))
-        x1 = torch.argmin(torch.abs(wavelengths - myNotch[1]))
-        Skw[x0:x1] = 0
-    """
-    
     # Normalize result to have integral 1
     Skw = Skw / torch.trapz(Skw, wavelengths)
 
@@ -634,6 +517,7 @@ def fast_spectral_density_arbdist(
 
     return torch.mean(alpha), Skw
 
+# TODO: Rewrite this part to account for ion species
 def spectral_density_arbdist(
     wavelengths: u.nm,
     probe_wavelength: u.nm,

@@ -519,38 +519,41 @@ def fast_spectral_density_arbdist(
 
 # TODO: Rewrite this part to account for ion species
 def spectral_density_arbdist(
-    wavelengths: u.nm,
-    probe_wavelength: u.nm,
-    e_velocity_axes: u.m / u.s,
-    i_velocity_axes: u.m / u.s,
-    efn: u.nm ** -1,
-    ifn: u.nm ** -1,
-    n: u.m ** -3,
-    notches: u.nm = None,
-    efract: np.ndarray = None,
-    ifract: np.ndarray = None,
+    wavelengths,
+    probe_wavelength,
+    e_velocity_axes,
+    i_velocity_axes,
+    efn,
+    ifn,
+    n,
+    notches = None,
+    efract = torch.tensor([1.0], dtype=torch.float64),
+    ifract = torch.tensor([1.0], dtype=torch.float64),
     ion_species: Union[str, List[str], Particle, List[Particle]] = "p",
-    probe_vec=np.array([1, 0, 0]),
-    scatter_vec=np.array([0, 1, 0]),
+    probe_vec=torch.tensor([1, 0, 0]),
+    scatter_vec=torch.tensor([0, 1, 0]),
     scattered_power=False,
     inner_range=0.1,
     inner_frac=0.8,
-) -> Tuple[Union[np.floating, np.ndarray], np.ndarray]:
+):
     
     if efract is None:
-        efract = np.ones(1)
+        efract = torch.ones(1)
     else:
-        efract = np.asarray(efract, dtype=np.float64)
+        efract = torch.tensor(efract, dtype=torch.float64)
 
     if ifract is None:
-        ifract = np.ones(1)
+        ifract = torch.ones(1)
     else:
-        ifract = np.asarray(ifract, dtype=np.float64)
+        ifract = torch.tensor(ifract, dtype=torch.float64)
         
     #Check for notches
     if notches is None:
-        notches = [(0, 0)] * u.nm
+        notches = torch.tensor([[520, 540]]) # * u.nm
 
+    # Regarding conversion to SI, check with Mark and Derek about altering code to take np inputs
+    # For now, assume all args passed as tensors
+    """
     # Convert everything to SI, strip units
     wavelengths = wavelengths.to(u.m).value
     notches = notches.to(u.m).value
@@ -560,7 +563,7 @@ def spectral_density_arbdist(
     efn = efn.to(u.s / u.m).value
     ifn = ifn.to(u.s / u.m).value
     n = n.to(u.m ** -3).value
-    
+    """
     
     # Condition ion_species
     if isinstance(ion_species, (str, Particle)):
@@ -573,15 +576,15 @@ def spectral_density_arbdist(
         ion_species[ii] = Particle(ion)
     
     # Create arrays of ion Z and mass from particles given
-    ion_z = np.zeros(len(ion_species))
-    ion_m = np.zeros(len(ion_species))
+    ion_z = torch.zeros(len(ion_species))
+    ion_m = torch.zeros(len(ion_species))
     for i, particle in enumerate(ion_species):
         ion_z[i] = particle.charge_number
         ion_m[i] = ion_species[i].mass_number
         
     
-    probe_vec = probe_vec / np.linalg.norm(probe_vec)
-    scatter_vec = scatter_vec / np.linalg.norm(scatter_vec)
+    probe_vec = probe_vec / torch.linalg.norm(probe_vec)
+    scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
     
     
     return fast_spectral_density_arbdist(

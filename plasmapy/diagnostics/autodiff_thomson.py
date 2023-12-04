@@ -222,7 +222,7 @@ def chi(
     inner_frac = 0.8
     """
 
-    outer_frac = torch.tensor(1.) - inner_frac
+    outer_frac = torch.tensor([1.]) - inner_frac
 
     m_inner = torch.linspace(0, inner_range, int(torch.floor(torch.tensor([nPoints / 2 * inner_frac]))))
     p_inner = torch.linspace(0, inner_range, int(torch.ceil(torch.tensor([nPoints / 2 * inner_frac]))))

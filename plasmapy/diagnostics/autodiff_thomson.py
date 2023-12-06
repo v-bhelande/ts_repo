@@ -382,7 +382,10 @@ def fast_spectral_density_arbdist(
     # Matmul is simultaneously conducting dot product over all wavelengths
     # and ion components
 
-    w_e = w -torch.matmul(electron_vel, torch.outer(k, k_vec).T)
+    print("Ion vel:", ion_vel)
+    print("torch.outer(k, k_vec).T:", torch.outer(k, k_vec).T)
+
+    w_e = w - torch.matmul(electron_vel, torch.outer(k, k_vec).T)
     w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
 
     # Compute the scattering parameter alpha

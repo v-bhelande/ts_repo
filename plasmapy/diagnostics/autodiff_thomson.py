@@ -347,6 +347,8 @@ def fast_spectral_density_arbdist(
         ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
+    ion_vel = torch.reshape(ion_vel, (1, len(ion_vel)))    # ADDED THIS 10:45pm
+
     # Define some constants
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 

@@ -344,8 +344,8 @@ def fast_spectral_density_arbdist(
     k = np.sqrt(ks ** 2 + kl ** 2 - 2 * ks * kl * np.cos(scattering_angle))
     # print("k:", k)
 
-    print("ion_vel:", ion_vel)
-    print("np.outer(k, k_vec).T:", np.outer(k, k_vec).T)
+    # print("ion_vel:", ion_vel)
+    # print("np.outer(k, k_vec).T:", np.outer(k, k_vec).T)
 
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths

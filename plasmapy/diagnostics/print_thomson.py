@@ -293,7 +293,12 @@ def fast_spectral_density_arbdist(
     ion_vel = []
     ion_vel_1d = []
     vTi = []
+
+    print("ifn:", ifn)        # INSERTED STATEMENT HERE
+    
     for i, fn in enumerate(ifn):
+        print("i:", i)        # INSERTED STATEMENT HERE
+        print("fn:", fn)      # INSERTED STATEMENT HERE
         v_axis = i_velocity_axes[i]
         moment1_integrand = np.multiply(fn, v_axis)
         bulk_velocity = np.trapz(moment1_integrand, v_axis)
@@ -505,6 +510,8 @@ def spectral_density_arbdist(
         ifract = np.ones(1)
     else:
         ifract = np.asarray(ifract, dtype=np.float64)
+
+    print("ifract:", ifract)        # INSERTED STATEMENT HERE
         
     #Check for notches
     if notches is None:
@@ -1062,13 +1069,9 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
     # Extract crucial settings of emodel, imodel first
     emodel = settings["emodel"]
     imodel = settings["imodel"]
-
-    # print("emodel:", emodel)
-    # print("imodel:", imodel)
     
     ifract = _params_to_array(params, "ifract")
-    
-    
+      
     #ion charges follow params if given, otherwise they are fixed at default values
     ion_z = np.zeros(nSpecies)
     for i in range(nSpecies):
@@ -1114,9 +1117,6 @@ def _scattered_power_model_arbdist(wavelengths, settings=None, **params):
         ion_z = ion_z,
         **settings,
     )
-
-    # print("alpha:", alpha)
-    # print("S(k,w):", model_Pw)
 
     # Put settings back now
     # this is necessary to avoid changing the settings array globally
@@ -1186,9 +1186,6 @@ def _scattered_power_model_maxwellian(wavelengths, settings=None, **params):
         inst_fcn_arr=inst_fcn_arr,
         scattered_power=True,
     )
-
-    # print("alpha:", alpha)
-    # print("S(k,w):", model_Pw)
 
     return model_Pw
 

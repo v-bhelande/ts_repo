@@ -298,7 +298,7 @@ def fast_spectral_density_arbdist(
     
     for i, fn in enumerate(ifn):
         print("i:", i)        # INSERTED STATEMENT HERE
-        # print("fn:", fn)      # INSERTED STATEMENT HERE
+        print("fn:", fn)      # INSERTED STATEMENT HERE
         v_axis = i_velocity_axes[i]
         moment1_integrand = np.multiply(fn, v_axis)
         bulk_velocity = np.trapz(moment1_integrand, v_axis)

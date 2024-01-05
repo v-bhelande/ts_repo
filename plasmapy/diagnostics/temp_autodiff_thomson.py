@@ -600,7 +600,7 @@ def spectral_density_arbdist(
         e_velocity_axes, 
         i_velocity_axes, 
         efn, 
-        ifns,
+        ifn,
         n,
         notches,
         efract,

@@ -313,9 +313,9 @@ def fast_spectral_density_arbdist(
     ion_vel_1d = np.array(ion_vel_1d)
     vTi = np.array(vTi)
 
-    # print("ion_vel:", ion_vel)
-    # print("ion_vel_1d:", ion_vel_1d)
-    # print("vTi:", vTi)
+    print("ion_vel:", ion_vel)
+    print("ion_vel_1d:", ion_vel_1d)
+    print("vTi:", vTi)
 
     # Define some constants
     C = 299792458  # speed of light

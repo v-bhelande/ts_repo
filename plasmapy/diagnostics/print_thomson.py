@@ -306,7 +306,7 @@ def fast_spectral_density_arbdist(
         ion_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
         ion_vel_1d.append(bulk_velocity)
         vTi.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
-        print("ion_vel:", ion_vel)       # INSERTED STATEMENT HERE
+        #print("ion_vel:", ion_vel)       # INSERTED STATEMENT HERE
         #print("vTi:", vTi)              # INSERTED STATEMENT HERE
 
     ion_vel = np.array(ion_vel)

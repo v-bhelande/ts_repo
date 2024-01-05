@@ -348,14 +348,15 @@ def fast_spectral_density_arbdist(
 
     for i, fn in enumerate(ifns):
         print("i:", i)
+        print("fn:", fn)
         v_axis = i_velocity_axes[i]
         print("v_axis:", v_axis)
         moment1_integrand = torch.multiply(fn, v_axis)
         print("moment1_integrand:", moment1_integrand)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
-        print("bulk_velocity:", bulk_velocity)
+        #print("bulk_velocity:", bulk_velocity)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
-        print("moment2_integrand:", moment2_integrand)
+        #print("moment2_integrand:", moment2_integrand)
 
         ion_vel = torch.concatenate((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
         print("ion_vel:", ion_vel)

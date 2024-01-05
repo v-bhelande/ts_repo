@@ -337,13 +337,12 @@ def fast_spectral_density_arbdist(
     # Convert ifn to required form         # MADE CHANGE HERE!!!
     ifns = torch.zeros(len(ifn), len(i_velocity_axes[0]))
     for i in range(len(ifn)):
-      print("i:", i)
+      # print("i:", i)
       ifns[i] = ifn[i]
 
-   #  print("ifn:", ifn)        # INSERTED STATEMENT HERE
+   print("ifns BEFORE enumerate:", ifns)        # INSERTED STATEMENT HERE
 
     # i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))    # COMMNTED THIS OUT FOR NOW
-    print("i_velocity_axes:", i_velocity_axes)
     # ifn = torch.reshape(ifn, (1, len(ifn)))
 
     for i, fn in enumerate(ifns):

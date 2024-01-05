@@ -335,7 +335,7 @@ def fast_spectral_density_arbdist(
     vTi = torch.tensor([])
 
     # Convert ifn to required form         # MADE CHANGE HERE!!!
-    ifns = torch.zeros(len(ifn), len(i_velocity_axes[0])
+    ifns = torch.zeros(len(ifn), len(i_velocity_axes[0]))
     for i in range(len(ifn)):
       print("i:", i)
       ifns[i] = ifn[i]

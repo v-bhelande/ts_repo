@@ -334,12 +334,18 @@ def fast_spectral_density_arbdist(
     ion_vel_1d = torch.tensor([])
     vTi = torch.tensor([])
 
+    # Convert ifn to required form         # MADE CHANGE HERE!!!
+    ifns = torch.zeros(len(ifn), len(i_velocity_axes[0])
+    for i in range(len(ifn)):
+      print("i:", i)
+      ifns[i] = ifn[i]
+
     print("ifn:", ifn)        # INSERTED STATEMENT HERE
 
     i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))
-    ifn = torch.reshape(ifn, (1, len(ifn)))
+    # ifn = torch.reshape(ifn, (1, len(ifn)))
 
-    for i, fn in enumerate(ifn):
+    for i, fn in enumerate(ifns):
         v_axis = i_velocity_axes[i]
         moment1_integrand = torch.multiply(fn, v_axis)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
@@ -588,14 +594,13 @@ def spectral_density_arbdist(
     probe_vec = probe_vec / torch.linalg.norm(probe_vec)
     scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
     
-    
     return fast_spectral_density_arbdist(
         wavelengths, 
         probe_wavelength, 
         e_velocity_axes, 
         i_velocity_axes, 
         efn, 
-        ifn,
+        ifns,
         n,
         notches,
         efract,
@@ -609,6 +614,7 @@ def spectral_density_arbdist(
         inner_frac
         )
 
+# ========== IGNORE EVERYTHING SOUTH OF HERE ==========
 
 def fast_spectral_density_maxwellian(
     wavelengths,

@@ -295,6 +295,8 @@ def fast_spectral_density_arbdist(
     vTi = []
 
     # print("ifn:", ifn)        # INSERTED STATEMENT HERE
+
+    print("i_velocity_axes:", i_velocity_axes)
     
     for i, fn in enumerate(ifn):
         # print("i:", i)        # INSERTED STATEMENT HERE
@@ -519,8 +521,6 @@ def spectral_density_arbdist(
     if notches is None:
         notches = [(0, 0)] * u.nm
 
-    print("ifn BEFORE:", ifn)        # INSERTED STATEMENT HERE
-
     # Convert everything to SI, strip units
     wavelengths = wavelengths.to(u.m).value
     notches = notches.to(u.m).value
@@ -530,8 +530,6 @@ def spectral_density_arbdist(
     efn = efn.to(u.s / u.m).value
     ifn = ifn.to(u.s / u.m).value
     n = n.to(u.m ** -3).value
-    
-    print("ifn AFTER:", ifn)        # INSERTED STATEMENT HERE
     
     # Condition ion_species
     if isinstance(ion_species, (str, Particle)):

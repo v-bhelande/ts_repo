@@ -299,25 +299,31 @@ def fast_spectral_density_arbdist(
     print("i_velocity_axes:", i_velocity_axes)
     
     for i, fn in enumerate(ifn):
-        # print("i:", i)        # INSERTED STATEMENT HERE
+        print("i:", i)        # INSERTED STATEMENT HERE
         # print("fn:", fn)      # INSERTED STATEMENT HERE
         v_axis = i_velocity_axes[i]
+        print("v_axis:", v_axis)
         moment1_integrand = np.multiply(fn, v_axis)
+        print("moment1_integrand:", moment1_integrand)
         bulk_velocity = np.trapz(moment1_integrand, v_axis)
+        print("bulk_velocity:", bulk_velocity)
         moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
+        print("moment2_integrand:", moment2_integrand)
+        
         ion_vel.append(bulk_velocity * k_vec / np.linalg.norm(k_vec))
         ion_vel_1d.append(bulk_velocity)
         vTi.append(np.sqrt(np.trapz(moment2_integrand, v_axis)))
-        #print("ion_vel:", ion_vel)       # INSERTED STATEMENT HERE
-        #print("vTi:", vTi)              # INSERTED STATEMENT HERE
+        print("ion_vel:", ion_vel)       # INSERTED STATEMENT HERE
+        print("ion_vel_1d:", ion_vel_1d)
+        print("vTi:", vTi)              # INSERTED STATEMENT HERE
 
     ion_vel = np.array(ion_vel)
     ion_vel_1d = np.array(ion_vel_1d)
     vTi = np.array(vTi)
 
-    print("ion_vel:", ion_vel)
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
+    #print("ion_vel:", ion_vel)
+    #print("ion_vel_1d:", ion_vel_1d)
+    #print("vTi:", vTi)
 
     # Define some constants
     C = 299792458  # speed of light

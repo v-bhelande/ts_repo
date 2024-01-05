@@ -340,9 +340,10 @@ def fast_spectral_density_arbdist(
       print("i:", i)
       ifns[i] = ifn[i]
 
-    print("ifn:", ifn)        # INSERTED STATEMENT HERE
+   #  print("ifn:", ifn)        # INSERTED STATEMENT HERE
 
-    i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))
+    # i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))    # COMMNTED THIS OUT FOR NOW
+    print("i_velocity_axes:", i_velocity_axes)
     # ifn = torch.reshape(ifn, (1, len(ifn)))
 
     for i, fn in enumerate(ifns):
@@ -354,6 +355,10 @@ def fast_spectral_density_arbdist(
         ion_vel = torch.concatenate((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
         ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
+
+    print("ion_vel:", ion_vel)
+    print("ion_vel_1d:", ion_vel_1d)
+    print("vTi:", vTi)
 
     # Define some constants
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light

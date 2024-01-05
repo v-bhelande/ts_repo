@@ -334,6 +334,8 @@ def fast_spectral_density_arbdist(
     ion_vel_1d = torch.tensor([])
     vTi = torch.tensor([])
 
+    print("ifn:", ifn)        # INSERTED STATEMENT HERE
+
     i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))
     ifn = torch.reshape(ifn, (1, len(ifn)))
 

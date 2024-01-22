@@ -30,7 +30,7 @@ from plasmapy.particles import Particle, particle_mass
 from plasmapy.utils.decorators import validate_quantities
 
 # Make default torch tensor type
-torch.set_default_type(torch.double)
+torch.set_default_dtype(torch.double)
 
 _c = const.c.si.value  # Make sure C is in SI units
 _e = const.e.si.value

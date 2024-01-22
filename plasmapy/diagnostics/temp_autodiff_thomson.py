@@ -205,6 +205,8 @@ def chi(
     deltauMax: maximum distance on the u axis to integrate to
     """
 
+    print("f:", f)
+
     # Take f' = df/du and f" = d^2f/d^2u
     fPrime = derivative(f=f, x=u_axis, order=1)
 
@@ -328,9 +330,9 @@ def fast_spectral_density_arbdist(
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
-        print("v_axis:", v_axis)
+        #print("v_axis:", v_axis)
         moment1_integrand = torch.multiply(fn, v_axis)
-        print("moment1_integrand:", moment1_integrand)
+        #print("moment1_integrand:", moment1_integrand)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
@@ -368,9 +370,9 @@ def fast_spectral_density_arbdist(
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
     ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
-    print("ion_vel:", ion_vel)
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
+    #print("ion_vel:", ion_vel)
+    #print("ion_vel_1d:", ion_vel_1d)
+    #print("vTi:", vTi)
 
     # Define some constants
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
@@ -425,6 +427,7 @@ def fast_spectral_density_arbdist(
 
     # Electron susceptibilities
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
+    print("0 chiE:", chiE)
     for i in range(len(efract)):
         chiE[i, :] = chi(
             f=efn[i],
@@ -459,7 +462,7 @@ def fast_spectral_density_arbdist(
             inner_range = inner_range,
             inner_frac = inner_frac
         )
-    print("chiI:", chiI)
+    # print("chiI:", chiI)
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)

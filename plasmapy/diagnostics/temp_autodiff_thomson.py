@@ -444,6 +444,7 @@ def fast_spectral_density_arbdist(
             inner_range = inner_range,
             inner_frac = inner_frac
         )
+    print("chiE:", chiE)
 
     # Ion susceptibilities
     chiI = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
@@ -461,6 +462,7 @@ def fast_spectral_density_arbdist(
             inner_range = inner_range,
             inner_frac = inner_frac
         )
+    print("chiI:", chiI)
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)

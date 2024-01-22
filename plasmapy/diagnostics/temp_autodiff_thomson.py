@@ -322,8 +322,8 @@ def fast_spectral_density_arbdist(
     print("e_velocity_axes:", e_velocity_axes)
     print("efn:", efn)
 
-    #e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))  # COMMENTED OUT FOR NOW...
-    #efn = torch.reshape(efn, (1, len(efn)))
+    e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))  # COMMENTED OUT FOR NOW...
+    efn = torch.reshape(efn, (1, len(efn)))
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):

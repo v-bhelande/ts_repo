@@ -427,7 +427,7 @@ def fast_spectral_density_arbdist(
 
     # Electron susceptibilities
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
-    print("0 chiE:", chiE)
+    print("efn:", efn)
     for i in range(len(efract)):
         chiE[i, :] = chi(
             f=efn[i],

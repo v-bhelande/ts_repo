@@ -288,9 +288,9 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = np.array(electron_vel_1d)
     vTe = np.array(vTe)
 
-    # print("electron_vel:", electron_vel)
-    # print("electron_vel_1d:", electron_vel_1d)
-    # print("vTe:", vTe)
+    print("electron_vel:", electron_vel)
+    print("electron_vel_1d:", electron_vel_1d)
+    print("vTe:", vTe)
 
     ion_vel = []
     ion_vel_1d = []
@@ -303,14 +303,14 @@ def fast_spectral_density_arbdist(
     for i, fn in enumerate(ifn):
         #if i == 1:
             #break
-        print("i:", i)        # INSERTED STATEMENT HERE
-        print("fn:", fn)      # INSERTED STATEMENT HERE
+        #print("i:", i)        # INSERTED STATEMENT HERE
+        #print("fn:", fn)      # INSERTED STATEMENT HERE
         v_axis = i_velocity_axes[i]
-        print("v_axis:", v_axis)
+        #print("v_axis:", v_axis)
         moment1_integrand = np.multiply(fn, v_axis)
-        print("moment1_integrand:", moment1_integrand)
+        #print("moment1_integrand:", moment1_integrand)
         bulk_velocity = np.trapz(moment1_integrand, v_axis)
-        print("bulk_velocity:", bulk_velocity)
+        #print("bulk_velocity:", bulk_velocity)
         moment2_integrand = np.multiply(fn, (v_axis - bulk_velocity) ** 2)
         #print("moment2_integrand:", moment2_integrand)
         

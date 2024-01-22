@@ -351,8 +351,8 @@ def fast_spectral_density_arbdist(
     # ifn = torch.reshape(ifn, (1, len(ifn)))
 
     for i, fn in enumerate(ifn):
-        if i == 1:
-            break
+        #if i == 1:
+            #break
         print("i:", i)
         print("fn:", fn)
         v_axis = i_velocity_axes[i]

@@ -446,6 +446,8 @@ def fast_spectral_density_arbdist(
         )
     print("chiE:", chiE)
 
+    break
+
     # Ion susceptibilities
     chiI = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for i in range(len(ifract)):

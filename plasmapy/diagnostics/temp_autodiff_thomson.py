@@ -319,13 +319,18 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
     vTe = torch.tensor([])  # thermal speeds (scalar)
 
+    print("e_velocity_axes:", e_velocity_axes)
+    print("efn:", efn)
+
     #e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))  # COMMENTED OUT FOR NOW...
     #efn = torch.reshape(efn, (1, len(efn)))
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
+        print("v_axis:", v_axis)
         moment1_integrand = torch.multiply(fn, v_axis)
+        print("moment1_integrand:", moment1_integrand)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 

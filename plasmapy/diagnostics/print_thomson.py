@@ -402,7 +402,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
+    print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -421,7 +421,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    # print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
+    print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)

@@ -319,8 +319,8 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
     vTe = torch.tensor([])  # thermal speeds (scalar)
 
-    e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))
-    efn = torch.reshape(efn, (1, len(efn)))
+    #e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))  # COMMENTED OUT FOR NOW...
+    #efn = torch.reshape(efn, (1, len(efn)))
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
@@ -333,34 +333,26 @@ def fast_spectral_density_arbdist(
         electron_vel_1d = torch.concatenate((electron_vel_1d, torch.tensor([bulk_velocity])))
         vTe = torch.concatenate((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
+    print("electron_vel:", electron_vel)
+    print("electron_vel_1d:", electron_vel_1d)
+    print("vTe:", vTe)
+
     ion_vel = torch.tensor([])
     ion_vel_1d = torch.tensor([])
     vTi = torch.tensor([])
 
-    """
-    # Convert ifn to required form         # MADE CHANGE HERE!!!
-    ifns = torch.zeros(len(ifn), len(i_velocity_axes[0]))
-    for i in range(len(ifn)):
-      # print("i:", i)
-      ifns[i] = ifn[i]
-
-   print("ifns BEFORE enumerate:", ifns)        # INSERTED STATEMENT HERE
-   """
-
-    # i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))    # COMMNTED THIS OUT FOR NOW
+    # i_velocity_axes = torch.reshape(i_velocity_axes, (1, len(i_velocity_axes)))    # COMMENTED THIS OUT FOR NOW
     # ifn = torch.reshape(ifn, (1, len(ifn)))
 
     for i, fn in enumerate(ifn):
-        #if i == 1:
-            #break
-        print("i:", i)
-        print("fn:", fn)
+        #print("i:", i)
+        #print("fn:", fn)
         v_axis = i_velocity_axes[i]
-        print("v_axis:", v_axis)
+        #print("v_axis:", v_axis)
         moment1_integrand = torch.multiply(fn, v_axis)
-        print("moment1_integrand:", moment1_integrand)
+        #print("moment1_integrand:", moment1_integrand)
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
-        print("bulk_velocity:", bulk_velocity)
+        #print("bulk_velocity:", bulk_velocity)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
         #print("moment2_integrand:", moment2_integrand)
 
@@ -434,7 +426,7 @@ def fast_spectral_density_arbdist(
             u_axis=(
                 e_velocity_axes[i] - electron_vel_1d[i]
             )
-            / (torch.sqrt(torch.tensor(2)) * vTe[i]),
+            / (torch.sqrt(torch.tensor([2])) * vTe[i]),
             k=k,
             xi=xie[i],
             v_th=vTe[i],

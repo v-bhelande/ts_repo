@@ -365,12 +365,12 @@ def fast_spectral_density_arbdist(
         #print("moment2_integrand:", moment2_integrand)
 
         ion_vel = torch.concatenate((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
-        ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
         #print("ion_vel:", ion_vel)
         ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
         #print("ion_vel_1d:", ion_vel_1d)
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
+    ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
     print("ion_vel:", ion_vel)
     print("ion_vel_1d:", ion_vel_1d)
     print("vTi:", vTi)

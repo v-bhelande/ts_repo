@@ -10,6 +10,8 @@ __all__ = [
     "scattered_power_model_arbdist",
 ]
 
+import torch # just in case
+
 import astropy.constants as const
 import astropy.units as u
 import inspect
@@ -402,7 +404,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiE:", chiE)    # INSERTED PRINT STATEMENT HERE
+    print("chiE torch:", torch.from_numpy(chiE))    # INSERTED PRINT STATEMENT HERE
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -421,7 +423,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiI:", chiI)    # INSERTED PRINT STATEMENT HERE
+    print("chiI torch:", torch.from_numpy(chiI))    # INSERTED PRINT STATEMENT HERE
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)

@@ -205,7 +205,7 @@ def chi(
     deltauMax: maximum distance on the u axis to integrate to
     """
 
-    print("f:", f)
+    # print("f:", f)
 
     # Take f' = df/du and f" = d^2f/d^2u
     fPrime = derivative(f=f, x=u_axis, order=1)
@@ -427,7 +427,7 @@ def fast_spectral_density_arbdist(
 
     # Electron susceptibilities
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
-    print("efn:", efn)
+    #print("efn:", efn)
     for i in range(len(efract)):
         chiE[i, :] = chi(
             f=efn[i],

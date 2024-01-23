@@ -423,7 +423,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiI torch:", torch.from_numpy(chiI))    # INSERTED PRINT STATEMENT HERE
+    # print("chiI torch:", torch.from_numpy(chiI))    # INSERTED PRINT STATEMENT HERE
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)

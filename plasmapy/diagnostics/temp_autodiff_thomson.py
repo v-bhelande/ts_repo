@@ -484,7 +484,7 @@ def fast_spectral_density_arbdist(
 
     eInterp = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for m in range(len(efract)):
-        longArgE = (e_velocity_axes[m] - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
+        longArgE = (e_velocity_axes[m] - electron_vel_1d[m]) / (torch.sqrt(torch.tensor(2)) * vTe[m])
         eInterp[m] = torch_1d_interp(xie[m], longArgE, efn[m])
 
     #print("eInterp:", eInterp)

@@ -404,7 +404,7 @@ def fast_spectral_density_arbdist(
             inner_frac = inner_frac
         )
 
-    print("chiE torch:", torch.from_numpy(chiE))    # INSERTED PRINT STATEMENT HERE
+    #print("chiE torch:", torch.from_numpy(chiE))    # INSERTED PRINT STATEMENT HERE
 
     # Ion susceptibilities
     chiI = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -443,8 +443,10 @@ def fast_spectral_density_arbdist(
                 / (np.sqrt(2) * vTe[m]),
                 efn[m],
             )
+        print("long:", e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]),
+                efn[m])
         )
-    # print("econtr:", econtr)
+    print("econtr:", econtr)
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)
@@ -524,8 +526,6 @@ def spectral_density_arbdist(
         ifract = np.ones(1)
     else:
         ifract = np.asarray(ifract, dtype=np.float64)
-
-    print("ifract:", ifract)        # INSERTED STATEMENT HERE
         
     #Check for notches
     if notches is None:

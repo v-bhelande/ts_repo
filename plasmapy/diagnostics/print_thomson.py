@@ -385,6 +385,9 @@ def fast_spectral_density_arbdist(
     # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
+    print(len(efract))
+    print(efn[0])
+
     # Electron susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)
     for i in range(len(efract)):

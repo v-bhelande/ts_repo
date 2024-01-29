@@ -377,7 +377,6 @@ def fast_spectral_density_arbdist(
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xie = (np.outer(1 / vTe, 1 / k) * w_e) / np.sqrt(2)
-    #print("xie:", xie)
     xii = (np.outer(1 / vTi, 1 / k) * w_i) / np.sqrt(2)
 
     # Calculate the susceptibilities
@@ -427,7 +426,9 @@ def fast_spectral_density_arbdist(
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
-    # print("epsilon:", epsilon)
+    print("epsilon:", epsilon)
+
+    print("xie:", xie)
 
     print("efract.size:", efract.size)
     # Electron component of Skw from Sheffield 5.1.2

@@ -426,9 +426,9 @@ def fast_spectral_density_arbdist(
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
-    print("epsilon:", epsilon)
+    #print("epsilon:", epsilon)
 
-    print("xie:", xie)
+    #print("xie:", xie)
 
     print("efract.size:", efract.size)
     # Electron component of Skw from Sheffield 5.1.2
@@ -448,7 +448,7 @@ def fast_spectral_density_arbdist(
                 efn[m],
             )
         )
-    #print("econtr:", econtr)
+    print("econtr:", econtr.size())
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)

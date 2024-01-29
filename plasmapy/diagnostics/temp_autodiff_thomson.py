@@ -431,9 +431,6 @@ def fast_spectral_density_arbdist(
     # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-    #print(len(efract))
-    #print(efn[0])
-
     # Electron susceptibilities
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     #print("efn:", efn)
@@ -485,9 +482,10 @@ def fast_spectral_density_arbdist(
 
      # Make a for loop to calculate and interplate necessary arguments ahead of time
 
-    for i in range(len(efract)):
-        longArgE = (e_velocity_axes[i] - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
-        eInterp[i] = torch_1d_interp(xie[i], longArgE, efn[i])
+    eInterp = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
+    for m in range(len(efract)):
+        longArgE = (e_velocity_axes[m] - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
+        eInterp[m] = torch_1d_interp(xie[m], longArgE, efn[m])
 
     print("eInterp:", eInterp)
                 

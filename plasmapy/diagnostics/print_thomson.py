@@ -476,8 +476,7 @@ def fast_spectral_density_arbdist(
                 ifn[m],
             )
         )
-    print("icontr:", icontr)
-    print("icontr:", icontr.size)
+    #print("icontr:", icontr)
 
     # Recast as real: imaginary part is already zero
     Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))
@@ -505,7 +504,7 @@ def fast_spectral_density_arbdist(
     Skw = Skw / np.trapz(Skw, wavelengths)
 
     # print("alpha:", np.mean(alpha))
-    # print("Skw:", Skw)
+    print("Skw:", torch.from_numpy(Skw))
 
     return np.mean(alpha), Skw
     

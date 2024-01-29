@@ -477,6 +477,7 @@ def fast_spectral_density_arbdist(
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
 
     xie = torch.flatten(xie)
+    print("e_velocity_axes:", e_velocity_axes)
     print("-:", e_velocity_axes - electron_vel_1d)
     longArgE = (e_velocity_axes - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
     longArgE = torch.flatten(longArgE)

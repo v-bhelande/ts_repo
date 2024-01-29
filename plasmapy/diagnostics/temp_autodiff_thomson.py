@@ -533,8 +533,8 @@ def fast_spectral_density_arbdist(
             * torch.pow(torch.abs(torch.sum(chiE, axis=0) / epsilon), 2)
             * iInterp[m]
         )
-    print("icontr:", icontr)
-    print("shap:", icontr.shape)
+    #print("icontr:", icontr)
+    #print("shape:", icontr.shape)
 
     # Recast as real: imaginary part is already zero
     Skw = torch.real(torch.sum(econtr, axis=0) + torch.sum(icontr, axis=0))
@@ -569,7 +569,7 @@ def fast_spectral_density_arbdist(
     # Normalize result to have integral 1
     Skw = Skw / torch.trapz(Skw, wavelengths)
 
-    # print("S(k,w) after normalization:", Skw)
+    print("S(k,w) after normalization:", Skw)
 
     return torch.mean(alpha), Skw
 

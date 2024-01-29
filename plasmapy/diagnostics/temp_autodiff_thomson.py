@@ -340,14 +340,11 @@ def fast_spectral_density_arbdist(
         electron_vel_1d = torch.concatenate((electron_vel_1d, torch.tensor([bulk_velocity])))
         vTe = torch.concatenate((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
-    print("BEFORE electron_vel:", electron_vel.shape)
-    print(len(efn))
     electron_vel = torch.reshape(electron_vel, (len(efn), 3))
-    print("AFTER electron_vel:", electron_vel.shape)
 
-    print("electron_vel:", electron_vel)
-    print("electron_vel_1d:", electron_vel_1d)
-    print("vTe:", vTe)
+    #print("electron_vel:", electron_vel)
+    #print("electron_vel_1d:", electron_vel_1d)
+    #print("vTe:", vTe)
 
     ion_vel = torch.tensor([])
     ion_vel_1d = torch.tensor([])
@@ -376,7 +373,6 @@ def fast_spectral_density_arbdist(
 
     #ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
     ion_vel = torch.reshape(ion_vel, (len(ifn), 3))
-    print(ion_vel.shape)
     #print("ion_vel:", ion_vel)
     #print("ion_vel_1d:", ion_vel_1d)
     #print("vTi:", vTi)
@@ -432,6 +428,9 @@ def fast_spectral_density_arbdist(
     # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
+    print(len(efract))
+    print(efn[0])
+
     # Electron susceptibilities
     chiE = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     #print("efn:", efn)
@@ -470,7 +469,7 @@ def fast_spectral_density_arbdist(
             inner_range = inner_range,
             inner_frac = inner_frac
         )
-    # print("chiI:", chiI)
+    print("chiI:", chiI)
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)

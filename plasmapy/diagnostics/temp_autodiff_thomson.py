@@ -324,9 +324,6 @@ def fast_spectral_density_arbdist(
     #print("e_velocity_axes:", e_velocity_axes)
     #print("efn:", efn)
 
-    #e_velocity_axes = torch.reshape(e_velocity_axes, (1, len(e_velocity_axes)))  # COMMENTED OUT FOR NOW...
-    #efn = torch.reshape(efn, (1, len(efn)))
-
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):
         v_axis = e_velocity_axes[i]
@@ -371,7 +368,6 @@ def fast_spectral_density_arbdist(
         #print("ion_vel_1d:", ion_vel_1d)
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
-    #ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
     ion_vel = torch.reshape(ion_vel, (len(ifn), 3))
     #print("ion_vel:", ion_vel)
     #print("ion_vel_1d:", ion_vel_1d)
@@ -476,9 +472,6 @@ def fast_spectral_density_arbdist(
 
     #print("xie:", xie.shape) # IS A TENSOR
     #print("xii:", xii.shape)
-    
-    #print("e_velocity_axes:", len(e_velocity_axes))
-    #print("i_velocity_axes:", len(i_velocity_axes))
 
      # Make a for loop to calculate and interplate necessary arguments ahead of time
 
@@ -500,7 +493,6 @@ def fast_spectral_density_arbdist(
             * eInterp[m]
         )
     #print("econtr:", econtr)
-    print(econtr.shape)
 
     """
     xii = torch.flatten(xii)
@@ -513,9 +505,6 @@ def fast_spectral_density_arbdist(
     # Resize iInterp
     iInterp = torch.reshape(iInterp, (1, len(iInterp)))
     """
-
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
 
     iInterp = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for m in range(len(ifract)):

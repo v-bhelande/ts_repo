@@ -476,7 +476,7 @@ def fast_spectral_density_arbdist(
                 ifn[m],
             )
         )
-    # print("icontr:", icontr)
+    print("icontr:", icontr.size)
 
     # Recast as real: imaginary part is already zero
     Skw = np.real(np.sum(econtr, axis=0) + np.sum(icontr, axis=0))

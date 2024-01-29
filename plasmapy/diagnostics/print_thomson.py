@@ -476,6 +476,7 @@ def fast_spectral_density_arbdist(
                 ifn[m],
             )
         )
+    print("icontr:", icontr)
     print("icontr:", icontr.size)
 
     # Recast as real: imaginary part is already zero

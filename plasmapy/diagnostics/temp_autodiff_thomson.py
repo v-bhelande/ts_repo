@@ -484,8 +484,8 @@ def fast_spectral_density_arbdist(
     print("xie:", xie.shape) # IS A TENSOR
     print("xii:", xii.shape)
     
-    print("e_velocity_axes:", len(e_velocity_axes)
-    print("i_velocity_axes:", len(i_velocity_axes)
+    print("e_velocity_axes:", len(e_velocity_axes))
+    print("i_velocity_axes:", len(i_velocity_axes))
                 
     xie = torch.flatten(xie)
     #print("e_velocity_axes:", e_velocity_axes) # Iterate over list

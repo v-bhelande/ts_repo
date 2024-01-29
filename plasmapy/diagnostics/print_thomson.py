@@ -454,6 +454,7 @@ def fast_spectral_density_arbdist(
             / (np.sqrt(2) * vTe[m]),
             efn[m],
         )
+        print("ahem:", ahem)
         print(ahem.size)
     print("econtr:", econtr.size)
 

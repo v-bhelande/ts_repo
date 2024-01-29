@@ -288,9 +288,9 @@ def fast_spectral_density_arbdist(
     electron_vel_1d = np.array(electron_vel_1d)
     vTe = np.array(vTe)
 
-    print("electron_vel:", electron_vel)
-    print("electron_vel_1d:", electron_vel_1d)
-    print("vTe:", vTe)
+    #print("electron_vel:", electron_vel)
+    #print("electron_vel_1d:", electron_vel_1d)
+    #print("vTe:", vTe)
 
     ion_vel = []
     ion_vel_1d = []
@@ -325,9 +325,9 @@ def fast_spectral_density_arbdist(
     ion_vel_1d = np.array(ion_vel_1d)
     vTi = np.array(vTi)
 
-    print("ion_vel:", ion_vel)
-    print("ion_vel_1d:", ion_vel_1d)
-    print("vTi:", vTi)
+    #print("ion_vel:", ion_vel)
+    #print("ion_vel_1d:", ion_vel_1d)
+    #print("vTi:", vTi)
 
     # Define some constants
     C = 299792458  # speed of light
@@ -429,9 +429,11 @@ def fast_spectral_density_arbdist(
     epsilon = 1 + np.sum(chiE, axis=0) + np.sum(chiI, axis=0)
     # print("epsilon:", epsilon)
 
+    print("efract.size:", efract.size)
     # Electron component of Skw from Sheffield 5.1.2
     econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
     for m in range(efract.size):
+        print("m:", m)
         print("long:", (e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]), efn[m])
         econtr[m] = efract[m] * (
             2
@@ -445,7 +447,7 @@ def fast_spectral_density_arbdist(
                 efn[m],
             )
         )
-    print("econtr:", econtr)
+    #print("econtr:", econtr)
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)

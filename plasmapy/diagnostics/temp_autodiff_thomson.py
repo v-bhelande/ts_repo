@@ -342,7 +342,7 @@ def fast_spectral_density_arbdist(
 
     print("BEFORE electron_vel:", electron_vel.shape)
     print(len(efn))
-    electron_vel = torch.reshape(electron_vel, (3, len(efn)))
+    electron_vel = torch.reshape(electron_vel, (len(efn), 3))
     print("AFTER electron_vel:", electron_vel.shape)
 
     print("electron_vel:", electron_vel)
@@ -374,7 +374,8 @@ def fast_spectral_density_arbdist(
         #print("ion_vel_1d:", ion_vel_1d)
         vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
-    ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
+    #ion_vel = torch.reshape(ion_vel, (3, len(ifn)))
+    ion_vel = torch.reshape(ion_vel, (len(ifn), 3))
     print(ion_vel.shape)
     #print("ion_vel:", ion_vel)
     #print("ion_vel_1d:", ion_vel_1d)

@@ -443,8 +443,7 @@ def fast_spectral_density_arbdist(
                 / (np.sqrt(2) * vTe[m]),
                 efn[m],
             )
-            print("long:", e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]),
-                efn[m])
+            print("long:", (e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]), efn[m])
         )
     print("econtr:", econtr)
 

@@ -448,7 +448,7 @@ def fast_spectral_density_arbdist(
                 efn[m],
             )
         )
-    print("econtr:", econtr.size())
+    print("econtr:", econtr.size)
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)

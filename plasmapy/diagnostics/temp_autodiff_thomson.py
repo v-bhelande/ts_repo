@@ -514,9 +514,12 @@ def fast_spectral_density_arbdist(
     iInterp = torch.reshape(iInterp, (1, len(iInterp)))
     """
 
+    print("ion_vel_1d:", ion_vel_1d)
+    print("vTi:", vTi)
+
     iInterp = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
     for m in range(len(ifract)):
-        longArgI = (i_velocity_axes[m] - ion_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTi)
+        longArgI = (i_velocity_axes[m] - ion_vel_1d[m]) / (torch.sqrt(torch.tensor(2)) * vTi[m])
         iInterp[m] = torch_1d_interp(xii[m], longArgI, ifn[m])
 
     # ion component

@@ -448,15 +448,17 @@ def fast_spectral_density_arbdist(
                 efn[m],
             )
         )
-        ahem = np.interp(
+        """
+        #ahem = np.interp(
             xie[m],
             (e_velocity_axes[m] - electron_vel_1d[m])
             / (np.sqrt(2) * vTe[m]),
             efn[m],
         )
-        print("ahem:", ahem)
-        print(ahem.size)
-    print("econtr:", econtr.size)
+        """
+        #print("ahem:", ahem)
+        #print(ahem.size)
+    print("econtr:", econtr)
 
     # ion component
     icontr = np.zeros([ifract.size, w.size], dtype=np.complex128)

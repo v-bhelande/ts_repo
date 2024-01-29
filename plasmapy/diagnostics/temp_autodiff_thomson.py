@@ -475,19 +475,23 @@ def fast_spectral_density_arbdist(
 
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
-    print("epsilon:", epsilon)
-
-    # Make a for loop to calculate and interplate necessary arguments ahead of time
-
-    #for i in 
+    #print("epsilon:", epsilon)
 
     print("xie:", xie.shape) # IS A TENSOR
     print("xii:", xii.shape)
     
     print("e_velocity_axes:", len(e_velocity_axes))
     print("i_velocity_axes:", len(i_velocity_axes))
+
+     # Make a for loop to calculate and interplate necessary arguments ahead of time
+
+    for i in range(len(efract)):
+        longArgE = (e_velocity_axes[i] - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
+        eInterp[i] = torch_1d_interp(xie[i], longArgE, efn[i])
+
+    print("eInterp:", eInterp)
                 
-    xie = torch.flatten(xie)
+    #xie = torch.flatten(xie)
     #print("e_velocity_axes:", e_velocity_axes) # Iterate over list
     print("-:", e_velocity_axes - electron_vel_1d)
     longArgE = (e_velocity_axes - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)

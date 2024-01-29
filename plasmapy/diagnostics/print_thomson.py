@@ -432,6 +432,7 @@ def fast_spectral_density_arbdist(
     # Electron component of Skw from Sheffield 5.1.2
     econtr = np.zeros([efract.size, w.size], dtype=np.complex128)
     for m in range(efract.size):
+        print("long:", (e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]), efn[m])
         econtr[m] = efract[m] * (
             2
             * np.pi
@@ -443,7 +444,6 @@ def fast_spectral_density_arbdist(
                 / (np.sqrt(2) * vTe[m]),
                 efn[m],
             )
-            print("long:", (e_velocity_axes[m] - electron_vel_1d[m]) / (np.sqrt(2) * vTe[m]), efn[m])
         )
     print("econtr:", econtr)
 

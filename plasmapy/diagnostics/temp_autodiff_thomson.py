@@ -453,11 +453,10 @@ def fast_spectral_density_arbdist(
             inner_range = inner_range,
             inner_frac = inner_frac
         )
-    print("chiE:", chiE)
+    #print("chiE:", chiE)
 
     # Ion susceptibilities
     chiI = torch.zeros((len(ifract), len(w)), dtype=torch.complex128)
-    print("Getting chiI")
     for i in range(len(ifract)):
         chiI[i, :] = chi(
             f=ifn[i],
@@ -478,6 +477,7 @@ def fast_spectral_density_arbdist(
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
 
     xie = torch.flatten(xie)
+    print("-":, e_velocity_axes - electron_vel_1d)
     longArgE = (e_velocity_axes - electron_vel_1d) / (torch.sqrt(torch.tensor(2)) * vTe)
     longArgE = torch.flatten(longArgE)
     efn = torch.flatten(efn)

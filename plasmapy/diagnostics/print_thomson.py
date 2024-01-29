@@ -336,6 +336,7 @@ def fast_spectral_density_arbdist(
 
     zbar = np.sum(ifract * ion_z)
     ne = efract * n
+    print("ne:", ne)
     ni = ifract * n / zbar  # ne/zbar = sum(ni)
     # wpe is calculated for the entire plasma (all electron populations combined)
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value
@@ -363,13 +364,11 @@ def fast_spectral_density_arbdist(
     k = np.sqrt(ks ** 2 + kl ** 2 - 2 * ks * kl * np.cos(scattering_angle))
     # print("k:", k)
 
-    # print("ion_vel:", ion_vel)
-    # print("np.outer(k, k_vec).T:", np.outer(k, k_vec).T)
-
     # Compute Doppler-shifted frequencies for both the ions and electrons
     # Matmul is simultaneously conducting dot product over all wavelengths
     # and ion components
     w_e = w - np.matmul(electron_vel, np.outer(k, k_vec).T)
+    print("w_e:", w_e)
     w_i = w - np.matmul(ion_vel, np.outer(k, k_vec).T)
 
     # Compute the scattering parameter alpha
@@ -378,6 +377,7 @@ def fast_spectral_density_arbdist(
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
     xie = (np.outer(1 / vTe, 1 / k) * w_e) / np.sqrt(2)
+    print("xie:", xie)
     xii = (np.outer(1 / vTi, 1 / k) * w_i) / np.sqrt(2)
 
     # Calculate the susceptibilities
@@ -385,8 +385,8 @@ def fast_spectral_density_arbdist(
     # xi = w / (sqrt2 k v_th), u = v / (sqrt2 v_th)
     # Then chi = -w_pl ** 2 / (2 v_th ** 2 k ** 2) integral (df/du / (u - xi)) du
 
-    print(len(efract))
-    print(efn[0])
+    #print(len(efract))
+    #print(efn[0])
 
     # Electron susceptibilities
     chiE = np.zeros([efract.size, w.size], dtype=np.complex128)

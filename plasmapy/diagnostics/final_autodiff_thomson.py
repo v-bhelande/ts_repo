@@ -353,7 +353,8 @@ def fast_spectral_density_arbdist(
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 
     # Calculate plasma parameters
-    zbar = torch.sum(ifract * ion_z)
+    #zbar = torch.sum(ifract * ion_z)    # UNCOMMENT LINE 356
+    zbar = torch.sum(torch.tensor(ifract) * ion_z)
     ne = efract * n
     ni = ifract * n / zbar  # ne/zbar = sum(ni)
 

@@ -528,8 +528,10 @@ def spectral_density_arbdist(
 
     if ifract is None:
         ifract = torch.ones(1)
+    """    # UNCOMMENT THIS LINEEE IF NO WORK
     else:
         ifract = torch.tensor(ifract, dtype=torch.float64)
+    """
         
     #Check for notches
     if notches is None:

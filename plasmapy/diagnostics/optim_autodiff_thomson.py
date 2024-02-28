@@ -37,10 +37,11 @@ _e = const.e.si.value
 _m_p = const.m_p.si.value
 _m_e = const.m_e.si.value
 
-@torch.jit.script
-def derivative(f: torch.Tensor, x: torch.Tensor, order: int):
+#@torch.jit.script
+def derivative(f: torch.Tensor, x: torch.Tensor, order: int, derivative_matrices):
     dx = x[1]-x[0]
 
+    """
     # Assumes f is 1D
     finDiffMat = torch.zeros(len(f), len(f), dtype = torch.float64)
 
@@ -128,7 +129,14 @@ def derivative(f: torch.Tensor, x: torch.Tensor, order: int):
 
         f = (1./dx**2)*torch.matmul(finDiffMat, f)
         return f
-        
+    """
+
+    if order == 1
+        f = (1./dx)*torch.matmul(finDiffMat[0], f) # Use matrix for 1st order derivatives
+        return f
+    elif order == 2
+        f = (1./dx**2)*torch.matmul(finDiffMat[1], f) # Use matrix for 1st order derivatives
+        return f
     else:
         print("You can only choose an order of 1 or 2...")
 
@@ -187,6 +195,7 @@ def chi(
     nPoints=1e3,
     inner_range=0.3,
     inner_frac=0.8,
+    derivative_matrices
 ):
     """
     f: array, distribution function of velocities
@@ -203,8 +212,8 @@ def chi(
     """
 
     # Take f' = df/du and f" = d^2f/d^2u
-    fPrime = derivative(f=f, x=u_axis, order=1)
-    fDoublePrime = derivative(f=f, x=u_axis, order=2)
+    fPrime = derivative(f=f, x=u_axis, order=1, derivative_matrices=derivative_matrices)
+    fDoublePrime = derivative(f=f, x=u_axis, order=2, derivative_matrices=derivative_matrices)
 
     # Interpolate f' and f" onto xi
     g = torch_1d_interp(xi, u_axis, fPrime)
@@ -299,6 +308,7 @@ def fast_spectral_density_arbdist(
     scattered_power=True,
     inner_range=0.1,
     inner_frac=0.8,
+    derivative_matrices
 ):
 
     # Ensure unit vectors are normalized
@@ -350,7 +360,6 @@ def fast_spectral_density_arbdist(
     #zbar = torch.sum(ifract * ion_z)    # UNCOMMENT LINE 356
     zbar = torch.sum(torch.tensor(ifract) * ion_z)
     ne = efract * n
-    #ni = ifract * n / zbar  # ne/zbar = sum(ni) # UNCOMMENT LINE 359
     ni = torch.tensor(ifract) * n / zbar  # ne/zbar = sum(ni)
 
     # wpe is calculated for the entire plasma (all electron populations combined)
@@ -412,7 +421,8 @@ def fast_spectral_density_arbdist(
             particle_m=5.4858e-4,
             particle_q=-1,
             inner_range = inner_range,
-            inner_frac = inner_frac
+            inner_frac = inner_frac,
+            derivative_matrices = derivative_matrices
         )
 
     # Ion susceptibilities
@@ -429,7 +439,8 @@ def fast_spectral_density_arbdist(
             particle_m=ion_m[i],
             particle_q=ion_z[i],
             inner_range = inner_range,
-            inner_frac = inner_frac
+            inner_frac = inner_frac,
+            derivative_matrices = derivative_matrices
         )
 
     # Calculate the longitudinal dielectric function
@@ -524,10 +535,6 @@ def spectral_density_arbdist(
 
     if ifract is None:
         ifract = torch.ones(1)
-    """    # UNCOMMENT THIS LINEEE IF NO WORK
-    else:
-        ifract = torch.tensor(ifract, dtype=torch.float64)
-    """
         
     #Check for notches
     if notches is None:
@@ -574,7 +581,8 @@ def spectral_density_arbdist(
         scatter_vec,
         scattered_power,
         inner_range,
-        inner_frac
+        inner_frac,
+        derivative_matrices
         )
 
 # ========== IGNORE EVERYTHING SOUTH OF HERE ==========

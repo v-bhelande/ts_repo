@@ -430,7 +430,7 @@ def fast_spectral_density_arbdist(
     for i in range(len(ifract)):
         chiI[i, :] = chi(
             f=ifn[i],
-            derivative_matrices=derivative_matrices
+            derivative_matrices=derivative_matrices,
             u_axis=(i_velocity_axes[i] - ion_vel_1d[i])
             / (torch.sqrt(torch.tensor([2])) * vTi[i]),
             k=k,
@@ -440,7 +440,7 @@ def fast_spectral_density_arbdist(
             particle_m=ion_m[i],
             particle_q=ion_z[i],
             inner_range = inner_range,
-            inner_frac = inner_frac,
+            inner_frac = inner_frac
         )
 
     # Calculate the longitudinal dielectric function

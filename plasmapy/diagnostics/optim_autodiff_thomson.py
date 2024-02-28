@@ -132,10 +132,10 @@ def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices, order: int
     """
 
     if order == 1:
-        f = (1./dx)*torch.matmul(finDiffMat[0], f) # Use matrix for 1st order derivatives
+        f = (1./dx)*torch.matmul(derivative_matrices[0], f) # Use matrix for 1st order derivatives
         return f
     elif order == 2:
-        f = (1./dx**2)*torch.matmul(finDiffMat[1], f) # Use matrix for 1st order derivatives
+        f = (1./dx**2)*torch.matmul(derivative_matrices[1], f) # Use matrix for 1st order derivatives
         return f
     else:
         print("You can only choose an order of 1 or 2...")

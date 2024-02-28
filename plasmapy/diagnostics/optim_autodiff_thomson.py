@@ -38,7 +38,7 @@ _m_p = const.m_p.si.value
 _m_e = const.m_e.si.value
 
 #@torch.jit.script
-def derivative(f: torch.Tensor, x: torch.Tensor, order: int, derivative_matrices):
+def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices, order: int):
     dx = x[1]-x[0]
 
     """
@@ -184,6 +184,7 @@ def torch_1d_interp(
 
 def chi(
     f,
+    derivative_matrices,
     u_axis,
     k,
     xi,
@@ -195,7 +196,6 @@ def chi(
     nPoints=1e3,
     inner_range=0.3,
     inner_frac=0.8,
-    derivative_matrices
 ):
     """
     f: array, distribution function of velocities
@@ -212,8 +212,8 @@ def chi(
     """
 
     # Take f' = df/du and f" = d^2f/d^2u
-    fPrime = derivative(f=f, x=u_axis, order=1, derivative_matrices=derivative_matrices)
-    fDoublePrime = derivative(f=f, x=u_axis, order=2, derivative_matrices=derivative_matrices)
+    fPrime = derivative(f=f, x=u_axis, derivative_matrices=derivative_matrices, order=1)
+    fDoublePrime = derivative(f=f, x=u_axis, derivative_matrices=derivative_matrices, order=2)
 
     # Interpolate f' and f" onto xi
     g = torch_1d_interp(xi, u_axis, fPrime)
@@ -297,6 +297,7 @@ def fast_spectral_density_arbdist(
     i_velocity_axes,
     efn,
     ifn,
+    derivative_matrices,
     n,
     notches = None,
     efract = torch.tensor([1.0], dtype=torch.float64),
@@ -307,8 +308,7 @@ def fast_spectral_density_arbdist(
     scatter_vec=torch.tensor([0, 1, 0]),
     scattered_power=True,
     inner_range=0.1,
-    inner_frac=0.8,
-    derivative_matrices
+    inner_frac=0.8
 ):
 
     # Ensure unit vectors are normalized
@@ -410,6 +410,7 @@ def fast_spectral_density_arbdist(
     for i in range(len(efract)):
         chiE[i, :] = chi(
             f=efn[i],
+            derivative_matrices=derivative_matrices,
             u_axis=(
                 e_velocity_axes[i] - electron_vel_1d[i]
             )
@@ -421,8 +422,7 @@ def fast_spectral_density_arbdist(
             particle_m=5.4858e-4,
             particle_q=-1,
             inner_range = inner_range,
-            inner_frac = inner_frac,
-            derivative_matrices = derivative_matrices
+            inner_frac = inner_frac
         )
 
     # Ion susceptibilities
@@ -430,6 +430,7 @@ def fast_spectral_density_arbdist(
     for i in range(len(ifract)):
         chiI[i, :] = chi(
             f=ifn[i],
+            derivative_matrices=derivative_matrices
             u_axis=(i_velocity_axes[i] - ion_vel_1d[i])
             / (torch.sqrt(torch.tensor([2])) * vTi[i]),
             k=k,
@@ -440,7 +441,6 @@ def fast_spectral_density_arbdist(
             particle_q=ion_z[i],
             inner_range = inner_range,
             inner_frac = inner_frac,
-            derivative_matrices = derivative_matrices
         )
 
     # Calculate the longitudinal dielectric function
@@ -516,6 +516,7 @@ def spectral_density_arbdist(
     i_velocity_axes,
     efn,
     ifn,
+    derivative_matrices,
     n,
     notches = None,
     efract = None,
@@ -571,6 +572,7 @@ def spectral_density_arbdist(
         i_velocity_axes, 
         efn, 
         ifn,
+        derivative_matrices,
         n,
         notches,
         efract,
@@ -581,8 +583,7 @@ def spectral_density_arbdist(
         scatter_vec,
         scattered_power,
         inner_range,
-        inner_frac,
-        derivative_matrices
+        inner_frac
         )
 
 # ========== IGNORE EVERYTHING SOUTH OF HERE ==========

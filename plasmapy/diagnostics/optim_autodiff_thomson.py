@@ -80,7 +80,7 @@ def derivative(f: torch.Tensor, x: torch.Tensor, order: int):
           finDiffMat[i][i+1] = 8./12.
           finDiffMat[i][i+2] = -1./12.
 
-        # print("finDiffMat:", finDiffMat)
+        print("finDiffMat of order 1:", finDiffMat)
 
         f = (1./dx)*torch.matmul(finDiffMat, f)
         return f
@@ -124,11 +124,11 @@ def derivative(f: torch.Tensor, x: torch.Tensor, order: int):
           finDiffMat[i][i+1] = 4./3.
           finDiffMat[i][i+2] = -1./12.
 
-        # finDiffMat = finDiffMat.to_sparse()
-        # print("finDiffMat:", finDiffMat)
+        print("finDiffMat of order 2:", finDiffMat)
 
         f = (1./dx**2)*torch.matmul(finDiffMat, f)
         return f
+        
     else:
         print("You can only choose an order of 1 or 2...")
 

@@ -37,7 +37,7 @@ _e = const.e.si.value
 _m_p = const.m_p.si.value
 _m_e = const.m_e.si.value
 
-@torch.jit.script
+#@torch.jit.script
 def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: list, order: int):
     dx = x[1]-x[0]
 
@@ -132,9 +132,10 @@ def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: list, orde
     """
 
     order1_mat = derivative_matrices[0]
+    order2_mat = derivative_matrices[1]
 
     if order == 1:
-        f = (1./dx)*torch.matmul(order1_mat, f) # Use matrix for 1st order derivatives
+        f = torch.jit.script((1./dx)*torch.matmul(order1_mat, f)) # Use matrix for 1st order derivatives
         return f
     elif order == 2:
         f = (1./dx**2)*torch.matmul(derivative_matrices[1], f) # Use matrix for 1st order derivatives

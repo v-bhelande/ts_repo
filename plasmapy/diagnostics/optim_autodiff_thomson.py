@@ -59,8 +59,8 @@ def torch_1d_interp(
     x: torch.Tensor,
     xp: torch.Tensor,
     fp: torch.Tensor,
-    left: Optional[float], #| None = None,
-    right: Optional[float] #| None = None,
+    left: Optional[float] = None, #| None = None,
+    right: Optional[float] = None #| None = None,
 ) -> torch.Tensor:
 
     """

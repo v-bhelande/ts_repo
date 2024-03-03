@@ -41,96 +41,6 @@ _m_e = const.m_e.si.value
 def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: List[torch.Tensor], order: int):
     dx = x[1]-x[0]
 
-    """
-    # Assumes f is 1D
-    finDiffMat = torch.zeros(len(f), len(f), dtype = torch.float64)
-
-    # Fill in finite difference matrix
-    if order == 1:
-        # Forward difference elements
-        finDiffMat[0][0] = -25./12.
-        finDiffMat[0][1] = 4.
-        finDiffMat[0][2] = -3.
-        finDiffMat[0][3] = 4./3.
-        finDiffMat[0][4] = -1./4.
-
-        finDiffMat[1][1] = -25./12.
-        finDiffMat[1][2] = 4.
-        finDiffMat[1][3] = -3.
-        finDiffMat[1][4] = 4./3.
-        finDiffMat[1][5] = -1./4.
-
-        # Backward difference elements
-        finDiffMat[-1][-1] = 25./12.
-        finDiffMat[-1][-2] = -4.
-        finDiffMat[-1][-3] = 3.
-        finDiffMat[-1][-4] = -4./3.
-        finDiffMat[-1][-5] = 1./4.
-
-        finDiffMat[-2][-2] = 25./12.
-        finDiffMat[-2][-3] = -4.
-        finDiffMat[-2][-4] = 3.
-        finDiffMat[-2][-5] = -4./3.
-        finDiffMat[-2][-6] = 1./4.
-
-        # Centered difference elements
-        for i in range(2, len(finDiffMat)-2):
-          finDiffMat[i][i-2] = 1./12.
-          finDiffMat[i][i-1] = -8./12.
-          finDiffMat[i][i] = 0.
-          finDiffMat[i][i+1] = 8./12.
-          finDiffMat[i][i+2] = -1./12.
-
-        print("finDiffMat of order 1:", finDiffMat)
-
-        f = (1./dx)*torch.matmul(finDiffMat, f)
-        return f
-      
-    elif order == 2:
-        # Forward difference elements
-        finDiffMat[0][0] = 15./4.
-        finDiffMat[0][1] = -77./6.
-        finDiffMat[0][2] = 107./6.
-        finDiffMat[0][3] = -13.
-        finDiffMat[0][4] = 61./12.
-        finDiffMat[0][5] = -5./6.
-
-        finDiffMat[1][1] = 15./4.
-        finDiffMat[1][2] = -77./6.
-        finDiffMat[1][3] = 107./6.
-        finDiffMat[1][4] = -13.
-        finDiffMat[1][5] = 61./12.
-        finDiffMat[1][6] = -5./6.
-
-        # Backward difference elements
-        finDiffMat[-1][-1] = 15./4.
-        finDiffMat[-1][-2] = -77./6.
-        finDiffMat[-1][-3] = 107./6.
-        finDiffMat[-1][-4] = -13.
-        finDiffMat[-1][-5] = 61./12.
-        finDiffMat[-1][-6] = -5./6.
-
-        finDiffMat[-2][-2] = 15./4.
-        finDiffMat[-2][-3] = -77./6.
-        finDiffMat[-2][-4] = 107./6.
-        finDiffMat[-2][-5] = -13.
-        finDiffMat[-2][-6] = 61./12.
-        finDiffMat[-2][-7] = -5./6.
-
-        # Centered difference elements
-        for i in range(2, len(finDiffMat)-2):
-          finDiffMat[i][i-2] = -1./12.
-          finDiffMat[i][i-1] = 4./3.
-          finDiffMat[i][i] = -5./2.
-          finDiffMat[i][i+1] = 4./3.
-          finDiffMat[i][i+2] = -1./12.
-
-        print("finDiffMat of order 2:", finDiffMat)
-
-        f = (1./dx**2)*torch.matmul(finDiffMat, f)
-        return f
-    """
-
     order1_mat = derivative_matrices[0]
     order2_mat = derivative_matrices[1]
 
@@ -143,6 +53,7 @@ def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: List[torch
     else:
         print("You can only choose an order of 1 or 2...")
 
+@torch.jit.script
 # Interpolation Function from Lars Du (end of thread): https://github.com/pytorch/pytorch/issues/1552
 def torch_1d_interp(
     x: torch.Tensor,

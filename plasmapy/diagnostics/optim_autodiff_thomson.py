@@ -466,7 +466,6 @@ def spectral_density_arbdist(
     # Condition ion_species
     if isinstance(ion_species, (str, Particle)):
         ion_species = [ion_species]
-    print(ion_species)
     if len(ion_species) == 0:
         raise ValueError("At least one ion species needs to be defined.")
     for ii, ion in enumerate(ion_species):
@@ -481,7 +480,6 @@ def spectral_density_arbdist(
         ion_z[i] = particle.charge_number
         ion_m[i] = ion_species[i].mass_number
         
-    
     probe_vec = probe_vec / torch.linalg.norm(probe_vec)
     scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
     

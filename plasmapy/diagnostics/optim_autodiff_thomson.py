@@ -59,8 +59,8 @@ def torch_1d_interp(
     x: torch.Tensor,
     xp: torch.Tensor,
     fp: torch.Tensor,
-    left: Optional[float] = None, #| None = None,
-    right: Optional[float] = None #| None = None,
+    # left: Optional[float] = None, #| None = None,
+    # right: Optional[float] = None #| None = None,
 ) -> torch.Tensor:
 
     """
@@ -79,11 +79,16 @@ def torch_1d_interp(
         The interpolated values, same shape as x.
     """
 
+    """
     if left is None:
         left = fp[0]
 
     if right is None:
         right = fp[-1]
+    """
+
+    left = fp[0]
+    right = fp[-1]
 
     i = torch.clip(torch.searchsorted(xp, x, right=True), 1, len(xp) - 1)
 

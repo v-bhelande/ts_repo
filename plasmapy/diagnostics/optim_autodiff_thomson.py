@@ -38,7 +38,7 @@ _m_p = const.m_p.si.value
 _m_e = const.m_e.si.value
 
 @torch.jit.script
-def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: List[torch.Tensor], order: int):
+def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: Tuple[torch.Tensor], order: int):
     dx = x[1]-x[0]
 
     order1_mat = derivative_matrices[0]
@@ -54,7 +54,7 @@ def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: List[torch
         print("You can only choose an order of 1 or 2...")
 
 @torch.jit.script
-# Interpolation Function from Lars Du (end of thread): https://github.com/pytorch/pytorch/issues/1552
+# Original interpolation function from Lars Du (end of thread): https://github.com/pytorch/pytorch/issues/1552
 def torch_1d_interp(
     x: torch.Tensor,
     xp: torch.Tensor,
@@ -78,15 +78,7 @@ def torch_1d_interp(
     Returns:
         The interpolated values, same shape as x.
     """
-
-    """
-    if left is None:
-        left = fp[0]
-
-    if right is None:
-        right = fp[-1]
-    """
-
+    
     left = fp[0]
     right = fp[-1]
 

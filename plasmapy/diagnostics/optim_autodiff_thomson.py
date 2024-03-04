@@ -38,7 +38,7 @@ _m_p = const.m_p.si.value
 _m_e = const.m_e.si.value
 
 @torch.jit.script
-def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: Tuple[torch.Tensor], order: int):
+def derivative(f: torch.Tensor, x: torch.Tensor, derivative_matrices: Tuple[torch.Tensor, torch.Tensor], order: int):
     dx = x[1]-x[0]
 
     order1_mat = derivative_matrices[0]

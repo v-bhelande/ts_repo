@@ -165,6 +165,9 @@ def torch_1d_interp(
     if right is None:
         right = fp[-1]
     """
+
+    left = fp[0]
+    right = fp[-1]
     
     i = torch.clip(torch.searchsorted(xp, x, right=True), 1, len(xp) - 1)
 

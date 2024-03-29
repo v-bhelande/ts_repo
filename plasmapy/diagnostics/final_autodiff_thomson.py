@@ -139,8 +139,8 @@ def torch_1d_interp(
     x: torch.Tensor,
     xp: torch.Tensor,
     fp: torch.Tensor,
-    left: float | None = None,
-    right: float | None = None,
+    #left: float | None = None,
+    #right: float | None = None,
 ) -> torch.Tensor:
 
     """
@@ -158,13 +158,14 @@ def torch_1d_interp(
     Returns:
         The interpolated values, same shape as x.
     """
-
+    """
     if left is None:
         left = fp[0]
 
     if right is None:
         right = fp[-1]
-
+    """
+    
     i = torch.clip(torch.searchsorted(xp, x, right=True), 1, len(xp) - 1)
 
     answer = torch.where(

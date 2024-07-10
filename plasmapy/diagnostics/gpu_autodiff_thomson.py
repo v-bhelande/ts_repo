@@ -313,8 +313,8 @@ def fast_spectral_density_arbdist(
     alpha = torch.sqrt(torch.tensor([2], device=device)) * wpe / torch.outer(k, vTe)
 
     # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
-    xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2]))
-    xii = (torch.outer(1 / vTi, 1 / k) * w_i) / torch.sqrt(torch.tensor([2]))
+    xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2], device=device))
+    xii = (torch.outer(1 / vTi, 1 / k) * w_i) / torch.sqrt(torch.tensor([2], device=device))
 
     # Calculate the susceptibilities
     # Apply Sheffield (3.3.9) with the following substitutions

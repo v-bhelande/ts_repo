@@ -202,7 +202,7 @@ def chi(
 
     # Coefficient
     v_th = torch.tensor([v_th], device=device)
-    coefficient = -1. * wpl2 / k ** 2 / (torch.sqrt(torch.tensor([2])) * v_th)
+    coefficient = -1. * wpl2 / k ** 2 / (torch.sqrt(torch.tensor([2], device=device)) * v_th)
     
     return coefficient * integral
 

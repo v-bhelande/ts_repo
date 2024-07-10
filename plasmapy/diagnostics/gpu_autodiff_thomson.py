@@ -365,7 +365,7 @@ def fast_spectral_density_arbdist(
     # Make a for loop to calculate and interplate necessary arguments ahead of time
     eInterp = torch.zeros((len(efract), len(w)), dtype=torch.complex128, device=device)
     for m in range(len(efract)):
-        longArgE = (e_velocity_axes[m] - electron_vel_1d[m]) / (torch.sqrt(torch.tensor(2), device=device) * vTe[m])
+        longArgE = (e_velocity_axes[m] - electron_vel_1d[m]) / (torch.sqrt(torch.tensor([2], device=device)) * vTe[m])
         eInterp[m] = torch_1d_interp(xie[m], longArgE, efn[m])
 
     # Electron component of Skw from Sheffield 5.1.2
@@ -381,7 +381,7 @@ def fast_spectral_density_arbdist(
 
     iInterp = torch.zeros((len(ifract), len(w)), dtype=torch.complex128, device=device)
     for m in range(len(ifract)):
-        longArgI = (i_velocity_axes[m] - ion_vel_1d[m]) / (torch.sqrt(torch.tensor(2), device=device) * vTi[m])
+        longArgI = (i_velocity_axes[m] - ion_vel_1d[m]) / (torch.sqrt(torch.tensor([2], device=device)) * vTi[m])
         iInterp[m] = torch_1d_interp(xii[m], longArgI, ifn[m])
 
     # ion component

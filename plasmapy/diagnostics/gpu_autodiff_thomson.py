@@ -330,7 +330,7 @@ def fast_spectral_density_arbdist(
             u_axis=(
                 e_velocity_axes[i] - electron_vel_1d[i]
             )
-            / (torch.sqrt(torch.tensor(2), device=device) * vTe[i]),
+            / (torch.sqrt(torch.tensor([2], device=device), device=device) * vTe[i]),
             k=k,
             xi=xie[i],
             v_th=vTe[i],

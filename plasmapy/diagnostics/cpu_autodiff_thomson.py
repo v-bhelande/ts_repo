@@ -147,8 +147,8 @@ def chi(
     m_outer = torch.linspace(inner_range, 1, int(torch.floor(torch.tensor([nPoints / 2 * outer_frac]))))
     p_outer = torch.linspace(inner_range, 1, int(torch.ceil(torch.tensor([nPoints / 2 * outer_frac]))))
 
-    m = torch.concatenate((m_inner, m_outer))
-    p = torch.concatenate((p_inner, p_outer))
+    m = torch.cat((m_inner, m_outer))
+    p = torch.cat((p_inner, p_outer))
 
     # Generate integration sample points that avoid the singularity
     # Create empty arrays of the correct size
@@ -163,8 +163,8 @@ def chi(
     m_point_array = phi + m * deltauMax
     p_point_array = phi + p * deltauMax
 
-    m_deltas = torch.concatenate(m_point_array[1:] - m_point_array[:-1], torch.tensor([0.]))
-    p_deltas = torch.concatenate(p_point_array[1:] - p_point_array[:-1], torch.tensor([0.]))
+    m_deltas = torch.cat((m_point_array[1:] - m_point_array[:-1], torch.tensor([0.])))
+    p_deltas = torch.cat((p_point_array[1:] - p_point_array[:-1], torch.tensor([0.])))
 
     # The integration points on u
     for i in range(len(xi)):
@@ -239,9 +239,9 @@ def fast_spectral_density_arbdist(
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
-        electron_vel = torch.concatenate((electron_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
-        electron_vel_1d = torch.concatenate((electron_vel_1d, torch.tensor([bulk_velocity])))
-        vTe = torch.concatenate((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
+        electron_vel = torch.cat((electron_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
+        electron_vel_1d = torch.cat((electron_vel_1d, torch.tensor([bulk_velocity])))
+        vTe = torch.cat((vTe, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
     electron_vel = torch.reshape(electron_vel, (len(efn), 3))
 
@@ -255,9 +255,9 @@ def fast_spectral_density_arbdist(
         bulk_velocity = torch.trapz(moment1_integrand, v_axis)
         moment2_integrand = torch.multiply(fn, torch.square(v_axis - bulk_velocity))
 
-        ion_vel = torch.concatenate((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
-        ion_vel_1d = torch.concatenate((ion_vel_1d, torch.tensor([bulk_velocity])))
-        vTi = torch.concatenate((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
+        ion_vel = torch.cat((ion_vel, bulk_velocity * k_vec / torch.linalg.norm(k_vec)))
+        ion_vel_1d = torch.cat((ion_vel_1d, torch.tensor([bulk_velocity])))
+        vTi = torch.cat((vTi, torch.tensor([torch.sqrt(torch.trapz(moment2_integrand, v_axis))])))
 
     ion_vel = torch.reshape(ion_vel, (len(ifn), 3))
 

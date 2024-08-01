@@ -140,36 +140,38 @@ def chi(
     inner_frac = 0.8
     """
 
-    outer_frac = torch.tensor([1.]) - inner_frac
+    # UNDO torch.no_grad() edit from lines 143-174 if things still don't work :(
+    with torch.no_grad():
+        outer_frac = torch.tensor([1.]) - inner_frac
 
-    m_inner = torch.linspace(0, inner_range, int(torch.floor(torch.tensor([nPoints / 2 * inner_frac]))))
-    p_inner = torch.linspace(0, inner_range, int(torch.ceil(torch.tensor([nPoints / 2 * inner_frac]))))
-    m_outer = torch.linspace(inner_range, 1, int(torch.floor(torch.tensor([nPoints / 2 * outer_frac]))))
-    p_outer = torch.linspace(inner_range, 1, int(torch.ceil(torch.tensor([nPoints / 2 * outer_frac]))))
+        m_inner = torch.linspace(0, inner_range, int(torch.floor(torch.tensor([nPoints / 2 * inner_frac]))))
+        p_inner = torch.linspace(0, inner_range, int(torch.ceil(torch.tensor([nPoints / 2 * inner_frac]))))
+        m_outer = torch.linspace(inner_range, 1, int(torch.floor(torch.tensor([nPoints / 2 * outer_frac]))))
+        p_outer = torch.linspace(inner_range, 1, int(torch.ceil(torch.tensor([nPoints / 2 * outer_frac]))))
 
-    m = torch.cat((m_inner, m_outer))
-    p = torch.cat((p_inner, p_outer))
+        m = torch.cat((m_inner, m_outer))
+        p = torch.cat((p_inner, p_outer))
 
-    # Generate integration sample points that avoid the singularity
-    # Create empty arrays of the correct size
-    zm = torch.zeros((len(xi), len(m)))
-    zp = torch.zeros((len(xi), len(p)))
+        # Generate integration sample points that avoid the singularity
+        # Create empty arrays of the correct size
+        zm = torch.zeros((len(xi), len(m)))
+        zp = torch.zeros((len(xi), len(p)))
     
-    # Compute maximum width of integration range based on the size of the input array of normalized velocities
-    deltauMax = max(u_axis) - min(u_axis)
-    # print("deltauMax:", deltauMax)
+        # Compute maximum width of integration range based on the size of the input array of normalized velocities
+        deltauMax = max(u_axis) - min(u_axis)
+        # print("deltauMax:", deltauMax)
 
-    # Compute arrays of offsets to add to the central points in xi
-    m_point_array = phi + m * deltauMax
-    p_point_array = phi + p * deltauMax
+        # Compute arrays of offsets to add to the central points in xi
+        m_point_array = phi + m * deltauMax
+        p_point_array = phi + p * deltauMax
 
-    m_deltas = torch.cat((m_point_array[1:] - m_point_array[:-1], torch.tensor([0.])))
-    p_deltas = torch.cat((p_point_array[1:] - p_point_array[:-1], torch.tensor([0.])))
+        m_deltas = torch.cat((m_point_array[1:] - m_point_array[:-1], torch.tensor([0.])))
+        p_deltas = torch.cat((p_point_array[1:] - p_point_array[:-1], torch.tensor([0.])))
 
-    # The integration points on u
-    for i in range(len(xi)):
-        zm[i, :] = xi[i] + m_point_array
-        zp[i, :] = xi[i] - p_point_array
+        # The integration points on u
+        for i in range(len(xi)):
+            zm[i, :] = xi[i] + m_point_array
+            zp[i, :] = xi[i] - p_point_array
 
     gm = torch_1d_interp(zm, u_axis, fPrime)
     gp = torch_1d_interp(zp, u_axis, fPrime)

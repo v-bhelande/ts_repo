@@ -222,35 +222,35 @@ def fast_spectral_density_arbdist(
 
 # Grouping everything with torch.no_grad() together to see if this works
 
-  with torch.no_grad():
+    with torch.no_grad():
   
-    # Ensure unit vectors are normalized
-    probe_vec = probe_vec / torch.linalg.norm(probe_vec)
-    scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
+        # Ensure unit vectors are normalized
+        probe_vec = probe_vec / torch.linalg.norm(probe_vec)
+        scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
 
-    # Normal vector along k, assume all velocities lie in this direction
-    k_vec = scatter_vec - probe_vec
-    k_vec = k_vec / torch.linalg.norm(k_vec)  # normalization
+        # Normal vector along k, assume all velocities lie in this direction
+        k_vec = scatter_vec - probe_vec
+        k_vec = k_vec / torch.linalg.norm(k_vec)  # normalization
 
-    # Compute drift velocities and thermal speeds for all electrons and ion species
-    electron_vel = torch.tensor([])  # drift velocities (vector)
-    electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
-    vTe = torch.tensor([])  # thermal speeds (scalar)
+        # Compute drift velocities and thermal speeds for all electrons and ion species
+        electron_vel = torch.tensor([])  # drift velocities (vector)
+        electron_vel_1d = torch.tensor([]) # 1D drift velocities (scalar)
+        vTe = torch.tensor([])  # thermal speeds (scalar)
 
-    # Define some constants
-    C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
+        # Define some constants
+        C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 
-    ion_vel = torch.tensor([])
-    ion_vel_1d = torch.tensor([])
-    vTi = torch.tensor([])
+        ion_vel = torch.tensor([])
+        ion_vel_1d = torch.tensor([])
+        vTi = torch.tensor([])
 
-    # Convert wavelengths to angular frequencies (electromagnetic waves, so
-    # phase speed is c)
-    ws = 2 * torch.pi * C / wavelengths
-    wl = 2 * torch.pi * C / probe_wavelength
+        # Convert wavelengths to angular frequencies (electromagnetic waves, so
+        # phase speed is c)
+        ws = 2 * torch.pi * C / wavelengths
+        wl = 2 * torch.pi * C / probe_wavelength
 
-    # Compute the frequency shift (required by energy conservation)
-    w = ws - wl
+        # Compute the frequency shift (required by energy conservation)
+        w = ws - wl
 
     # Note that we convert to SI, strip units, then reintroduce them outside the loop to get the correct objects
     for i, fn in enumerate(efn):

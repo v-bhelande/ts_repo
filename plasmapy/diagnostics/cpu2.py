@@ -438,36 +438,32 @@ def spectral_density_arbdist(
     inner_range=0.1,
     inner_frac=0.8,
 ):
-    
-    if efract is None:
-        efract = torch.ones(1)
-
-    if ifract is None:
-        ifract = torch.ones(1)
+    with torch.no_grad():
         
-    #Check for notches
-    if notches is None:
-        notches = torch.tensor([[520, 540]]) # * u.nm
-    
-    # Condition ion_species
-    if isinstance(ion_species, (str, Particle)):
-        ion_species = [ion_species]
-    if len(ion_species) == 0:
-        raise ValueError("At least one ion species needs to be defined.")
-    for ii, ion in enumerate(ion_species):
-        if isinstance(ion, Particle):
-            continue
-        ion_species[ii] = Particle(ion)
-    
-    # Create arrays of ion Z and mass from particles given
-    ion_z = torch.zeros(len(ion_species))
-    ion_m = torch.zeros(len(ion_species))
-    for i, particle in enumerate(ion_species):
-        ion_z[i] = particle.charge_number
-        ion_m[i] = ion_species[i].mass_number
+        if efract is None: efract = torch.ones(1)
+        if ifract is None: ifract = torch.ones(1)
         
-    probe_vec = probe_vec / torch.linalg.norm(probe_vec)
-    scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
+        # Check for notches
+        if notches is None: notches = torch.tensor([[520, 540]]) # * u.nm
+    
+        # Condition ion_species
+        if isinstance(ion_species, (str, Particle)): ion_species = [ion_species]
+        if len(ion_species) == 0: raise ValueError("At least one ion species needs to be defined.")
+    
+        for ii, ion in enumerate(ion_species):
+            if isinstance(ion, Particle): continue
+            ion_species[ii] = Particle(ion)
+    
+        # Create arrays of ion Z and mass from particles given
+        ion_z = torch.zeros(len(ion_species))
+        ion_m = torch.zeros(len(ion_species))
+    
+        for i, particle in enumerate(ion_species):
+            ion_z[i] = particle.charge_number
+            ion_m[i] = ion_species[i].mass_number
+        
+        probe_vec = probe_vec / torch.linalg.norm(probe_vec)
+        scatter_vec = scatter_vec / torch.linalg.norm(scatter_vec)
     
     return fast_spectral_density_arbdist(
         wavelengths, 

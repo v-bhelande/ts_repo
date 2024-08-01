@@ -139,8 +139,7 @@ def chi(
     the fraction of total divisions used in the inner range; should be > inner_range
     inner_frac = 0.8
     """
-
-    # UNDO torch.no_grad() edit from lines 143-174 if things still don't work :(
+    
     with torch.no_grad():
         outer_frac = torch.tensor([1.]) - inner_frac
 
@@ -276,38 +275,40 @@ def fast_spectral_density_arbdist(
     n = n * 3182.60735
     wpe = torch.sqrt(n)
 
-    # Convert wavelengths to angular frequencies (electromagnetic waves, so
-    # phase speed is c)
-    ws = 2 * torch.pi * C / wavelengths
-    wl = 2 * torch.pi * C / probe_wavelength
+    # UNDO torch.no_grad() changes in lines 279-311 if this don't work out...
+    with torch.no_grad():
+        # Convert wavelengths to angular frequencies (electromagnetic waves, so
+        # phase speed is c)
+        ws = 2 * torch.pi * C / wavelengths
+        wl = 2 * torch.pi * C / probe_wavelength
 
-    # Compute the frequency shift (required by energy conservation)
-    w = ws - wl
+        # Compute the frequency shift (required by energy conservation)
+        w = ws - wl
     
-    # Compute the wavenumbers in the plasma
-    # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
-    ks = torch.sqrt((torch.square(ws) - torch.square(wpe))) / C
-    kl = torch.sqrt((torch.square(wl) - torch.square(wpe))) / C
+        # Compute the wavenumbers in the plasma
+        # See Sheffield Sec. 1.8.1 and Eqs. 5.4.1 and 5.4.2
+        ks = torch.sqrt((torch.square(ws) - torch.square(wpe))) / C
+        kl = torch.sqrt((torch.square(wl) - torch.square(wpe))) / C
 
-    # Compute the wavenumber shift (required by momentum conservation)
-    scattering_angle = torch.arccos(torch.dot(probe_vec, scatter_vec))
-    # Eq. 1.7.10 in Sheffield
-    k = torch.sqrt((torch.square(ks) + torch.square(kl) - 2 * ks * kl * torch.cos(scattering_angle)))
+        # Compute the wavenumber shift (required by momentum conservation)
+        scattering_angle = torch.arccos(torch.dot(probe_vec, scatter_vec))
+        # Eq. 1.7.10 in Sheffield
+        k = torch.sqrt((torch.square(ks) + torch.square(kl) - 2 * ks * kl * torch.cos(scattering_angle)))
 
-    # Compute Doppler-shifted frequencies for both the ions and electrons
-    # Matmul is simultaneously conducting dot product over all wavelengths
-    # and ion components
+        # Compute Doppler-shifted frequencies for both the ions and electrons
+        # Matmul is simultaneously conducting dot product over all wavelengths
+        # and ion components
 
-    w_e = w - torch.matmul(electron_vel, torch.outer(k, k_vec).T)
-    w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
+        w_e = w - torch.matmul(electron_vel, torch.outer(k, k_vec).T)
+        w_i = w - torch.matmul(ion_vel, torch.outer(k, k_vec).T)
 
-    # Compute the scattering parameter alpha
-    # expressed here using the fact that v_th/w_p = root(2) * Debye length
-    alpha = torch.sqrt(torch.tensor([2])) * wpe / torch.outer(k, vTe)
+        # Compute the scattering parameter alpha
+        # expressed here using the fact that v_th/w_p = root(2) * Debye length
+        alpha = torch.sqrt(torch.tensor([2])) * wpe / torch.outer(k, vTe)
 
-    # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
-    xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2]))
-    xii = (torch.outer(1 / vTi, 1 / k) * w_i) / torch.sqrt(torch.tensor([2]))
+        # Calculate the normalized phase velocities (Sec. 3.4.2 in Sheffield)
+        xie = (torch.outer(1 / vTe, 1 / k) * w_e) / torch.sqrt(torch.tensor([2]))
+        xii = (torch.outer(1 / vTi, 1 / k) * w_i) / torch.sqrt(torch.tensor([2]))
 
     # Calculate the susceptibilities
     # Apply Sheffield (3.3.9) with the following substitutions
@@ -355,7 +356,7 @@ def fast_spectral_density_arbdist(
     # Calculate the longitudinal dielectric function
     epsilon = 1 + torch.sum(chiE, axis=0) + torch.sum(chiI, axis=0)
 
-    # Make a for loop to calculate and interplate necessary arguments ahead of time
+    # Make a for loop to calculate and interpolate necessary arguments ahead of time
     eInterp = torch.zeros((len(efract), len(w)), dtype=torch.complex128)
     for m in range(len(efract)):
         longArgE = (e_velocity_axes[m] - electron_vel_1d[m]) / (torch.sqrt(torch.tensor(2)) * vTe[m])

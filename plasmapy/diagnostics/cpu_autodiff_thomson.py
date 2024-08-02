@@ -266,9 +266,9 @@ def fast_spectral_density_arbdist(
     C = torch.tensor([299792458], dtype = torch.float64)  # speed of light
 
     # Calculate plasma parameters
-    zbar = torch.sum(ifract * ion_z)
+    zbar = torch.sum(torch.as_tensor(ifract) * ion_z)
     ne = efract * n
-    ni = ifract * n / zbar  # ne/zbar = sum(ni)
+    ni = torch.as_tensor(ifract) * n / zbar  # ne/zbar = sum(ni)
 
     # wpe is calculated for the entire plasma (all electron populations combined)
     # wpe = plasma_frequency(n=n, particle="e-").to(u.rad / u.s).value

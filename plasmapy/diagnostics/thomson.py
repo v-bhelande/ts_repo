@@ -473,6 +473,9 @@ def fast_spectral_density_arbdist(
     # print("alpha:", np.mean(alpha))
     # print("Skw:", Skw)
 
+    # UNCOMMENT IF FAIL
+    Skw = Skw/Skw.max()
+
     return np.mean(alpha), Skw
     
 

@@ -1,10 +1,34 @@
 **NOTE FOR VIEWERS**
 
-My edits were made within this ThomsonScattering forked from a PlasmaPy contributor, Bryan Foo. To see the algorithm I wrote in PyTorch, please go to plasmapy/diagnostics and go through the file sgd_thomson_toch.py: https://github.com/v-kothale/ThomsonScattering/blob/analytic_thomson_fitting/plasmapy/diagnostics/sgd_thomson_torch.py.
+My edits were made within this ThomsonScattering forked from a PlasmaPy contributor, Bryan Foo. To see the algorithms I wrote in PyTorch, please go to plasmapy/diagnostics and go through the file sgd_thomson_toch.py: https://github.com/v-kothale/ThomsonScattering/blob/analytic_thomson_fitting/plasmapy/diagnostics/sgd_thomson_torch.py.
 
 To take a look at the fitting routines I coded to test the algorithm, go to the folder fitting_routines.
 
 **Everything below this is the READMe from PlasmaPy and was not altered in any form**
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <div align="center"><img src="https://raw.githubusercontent.com/PlasmaPy/PlasmaPy-logo/main/exports/with-text-dark.png" width="600"/></div>
 
